@@ -1,0 +1,57 @@
+{
+  "name": "v001-baseline",
+  "description": "Baseline config matching original hardcoded bot behavior",
+  "training": {
+    "max_trolls": 8,
+    "phase_thresholds": [20, 80],
+    "early_configs": [
+      [1, 1, 1, 0],
+      [2, 1, 1, 0],
+      [1, 2, 1, 0],
+      [1, 1, 2, 0],
+      [1, 1, 1, 1],
+      [2, 2, 1, 0],
+      [1, 2, 2, 0],
+      [2, 1, 2, 0]
+    ],
+    "mid_configs": [
+      [2, 2, 1, 0],
+      [2, 1, 2, 0],
+      [1, 2, 2, 0],
+      [2, 2, 2, 0],
+      [2, 1, 1, 0],
+      [1, 1, 1, 0],
+      [2, 2, 1, 1],
+      [2, 1, 2, 1],
+      [1, 2, 2, 1]
+    ],
+    "late_configs": [
+      [2, 2, 2, 1],
+      [2, 2, 1, 1],
+      [2, 1, 2, 1],
+      [1, 2, 2, 1],
+      [2, 2, 2, 0],
+      [3, 2, 1, 0],
+      [2, 3, 2, 0]
+    ]
+  },
+  "scoring": {
+    "reach_bonus": 2.0,
+    "closer_bonus": 0.2,
+    "water_bonus": 0.1,
+    "spread_penalty": 0.7,
+    "iron_base_score": 3.0,
+    "iron_threshold": 4,
+    "future_fruit_cd_threshold": 2,
+    "future_fruit_large_tree": 1.0,
+    "future_fruit_medium_tree": 0.3
+  },
+  "chop": {
+    "start_turn": 200,
+    "wood_value": 4,
+    "wood_vs_fruit_ratio": 1.0
+  },
+  "mining": {
+    "iron_threshold_base": 3
+  }
+}

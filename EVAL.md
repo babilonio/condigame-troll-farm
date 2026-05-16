@@ -3,27 +3,28 @@
 ## Running the Bot
 
 ```bash
-# Basic match (output: P0_score, P1_score, seed=N)
-./run.sh "python3 /work/bot.py" "python3 /work/examplebot.py" 42
+# Arena bot vs examplebot (quick test)
+./run.sh "python3 /work/arena_bot.py" "python3 /work/examplebot.py" 42
+
+# Arena bot vs configurable bot
+./run.sh "python3 /work/arena_bot.py" "python3 /work/bot.py --config /work/versions/v001.json" 42
+
+# Configurable bot vs itself
+./run.sh "python3 /work/bot.py" "python3 /work/bot.py" 42
 
 # With game replay log
-LOG=logs/match.json ./run.sh "python3 /work/bot.py" "python3 /work/examplebot.py" 42
+LOG=logs/match.json ./run.sh "python3 /work/arena_bot.py" "python3 /work/examplebot.py" 42
 
-# With web viewer (game runs, then serves replay at http://localhost:8888/test.html)
-# Viewer stays up until you Ctrl-C or the Docker container exits
-SERVER=1 LOG=logs/match.json ./run.sh "python3 /work/bot.py" "python3 /work/examplebot.py" 42
+# With web viewer (http://localhost:8888/test.html)
+SERVER=1 LOG=logs/replay.json ./run.sh "python3 /work/arena_bot.py" "python3 /work/examplebot.py" 42
 
-# Different seed (deterministic map generation)
-./run.sh "python3 /work/bot.py" "python3 /work/examplebot.py" 99
-
-# Different league (1=Wood1, 2=Wood2, 3=Bronze=all rules, 4=Gold/Legend)
-LEAGUE=3 ./run.sh ...
-
-# Mirror match (bot vs itself)
-./run.sh "python3 /work/bot.py" "python3 /work/bot.py" 42
+# Different seed or league
+LEAGUE=3 ./run.sh "python3 /work/arena_bot.py" "python3 /work/examplebot.py" 99
 ```
 
-All paths inside the Docker container are relative to `/work/`, which maps to the project root. So `python3 /work/bot.py` is the project's `bot.py`.
+All paths inside the Docker container are relative to `/work/`, which maps to the project root. So `python3 /work/arena_bot.py` is the project's `arena_bot.py`.
+
+**Use `arena_bot.py` for the CodinGame arena.** Use `bot.py --config` for self-play testing.
 
 ## Batch Testing
 
@@ -106,11 +107,28 @@ Then open **http://localhost:8888/test.html** in a browser. The game completes i
 
 The viewer page loads external JS from CDN (jQuery, Angular) so it needs internet access.
 
+## Self-Play Testing
+
+```bash
+# Arena bot vs baseline (50 seeds)
+python3 self_play.py --bot1 "python3 /work/arena_bot.py" --bot2 "python3 /work/bot.py" --seeds 50
+
+# Config-based A/B testing
+python3 self_play.py v001 v002 --seeds 30
+
+# Iteration workflow
+python3 iterate.py status          # show champion/challenger
+python3 iterate.py run --seeds 30   # run champion vs challenger
+python3 iterate.py promote v002     # promote challenger
+```
+
+See **ITERATE.md** for full documentation.
+
 ## Performance
 
 Each turn has a 50ms time limit (1000ms for the first turn). The bot's BFS caching means turn 1 is slightly slower (all BFS computations happen), but subsequent turns are fast since distance maps are cached. On a 22×11 grid, BFS is negligible.
 
-Typical timing per turn: <1ms. No timeouts observed across 1000+ games.
+Typical timing per turn: <1ms. No timeouts observed across 1000+ games. Zero crashes across 50 seeds tested.
 
 ## Common Issues
 

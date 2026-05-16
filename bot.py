@@ -1,6 +1,8 @@
-#!/usr/bin/env python3
 """
-Troll Farm Bot v3 - Competitive strategy
+Troll Farm Bot v4 - Configurable competitive strategy
+
+Supports --config <path> to load strategy parameters from a JSON file.
+Without --config, uses built-in defaults (matching v001-baseline).
 
 Core strategy:
 1. Train cheap trolls aggressively (growth is exponential)
@@ -11,6 +13,8 @@ Core strategy:
 """
 
 import sys
+import json
+import os
 from collections import deque
 
 PLUM, LEMON, APPLE, BANANA, IRON, WOOD = 0, 1, 2, 3, 4, 5
@@ -20,9 +24,57 @@ DY = [1, 0, -1, 0]
 PLANT_COOLDOWN = [8, 8, 9, 6]
 PLANT_WATER_BOOST = [5, 5, 7, 2]
 
+DEFAULT_CONFIG = {
+    "name": "default",
+    "training": {
+        "max_trolls": 8,
+        "phase_thresholds": [20, 80],
+        "early_configs": [
+            [1, 1, 1, 0], [2, 1, 1, 0], [1, 2, 1, 0],
+            [1, 1, 2, 0], [1, 1, 1, 1], [2, 2, 1, 0],
+            [1, 2, 2, 0], [2, 1, 2, 0]
+        ],
+        "mid_configs": [
+            [2, 2, 1, 0], [2, 1, 2, 0], [1, 2, 2, 0],
+            [2, 2, 2, 0], [2, 1, 1, 0], [1, 1, 1, 0],
+            [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1]
+        ],
+        "late_configs": [
+            [2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1],
+            [1, 2, 2, 1], [2, 2, 2, 0], [3, 2, 1, 0],
+            [2, 3, 2, 0]
+        ]
+    },
+    "scoring": {
+        "reach_bonus": 2.0,
+        "closer_bonus": 0.2,
+        "water_bonus": 0.1,
+        "spread_penalty": 0.7,
+        "iron_base_score": 3.0,
+        "iron_threshold": 4,
+        "future_fruit_cd_threshold": 2,
+        "future_fruit_large_tree": 1.0,
+        "future_fruit_medium_tree": 0.3
+    },
+    "chop": {
+        "start_turn": 200,
+        "wood_value": 4,
+        "wood_vs_fruit_ratio": 1.0
+    },
+    "mining": {
+        "iron_threshold_base": 3
+    }
+}
+
 
 class Bot:
-    def __init__(self):
+    def __init__(self, config=None):
+        self.config = config or DEFAULT_CONFIG
+        self.scor = self.config["scoring"]
+        self.chopc = self.config["chop"]
+        self.minec = self.config["mining"]
+        self.trainc = self.config["training"]
+
         self.width, self.height = map(int, input().split())
         self.grid = []
         for _ in range(self.height):
@@ -61,7 +113,6 @@ class Bot:
             if 0 <= nx < self.width and 0 <= ny < self.height and self.walkable[nx][ny]:
                 self.shack_nbrs.append((nx, ny))
 
-        # For opponent distance calculations
         ox, oy = self.opp_shack
         self.opp_shack_nbrs = []
         for d in range(4):
@@ -70,7 +121,6 @@ class Bot:
                 self.opp_shack_nbrs.append((nx, ny))
 
     def bfs(self, sx, sy, is_shack=False, shack_nbrs=None):
-        """BFS from (sx,sy). Handles shack cells specially."""
         key = (sx, sy)
         if key in self._bfs_cache:
             return self._bfs_cache[key]
@@ -99,7 +149,6 @@ class Bot:
         return dist
 
     def dist(self, d, x, y):
-        """Get distance from dist map, return 9999 if unreachable."""
         if 0 <= x < self.width and 0 <= y < self.height and d[x][y] >= 0:
             return d[x][y]
         return 9999
@@ -139,24 +188,14 @@ class Bot:
 
         actions = []
         sx, sy = self.my_shack
-
-        # Precompute distance maps we'll need
         shack_dist = self.bfs(sx, sy, True, self.shack_nbrs)
-
-        # Track which trees are targeted by which trolls this turn
-        # (we can still share - just don't all pile on one)
-        targeted_trees = {}  # (x,y) -> count of trolls targeting
+        targeted_trees = {}
 
         for troll in my_trolls:
             action = self._decide(troll, trees, my_inv, all_trolls, shack_dist, turn_num, targeted_trees)
             if action:
                 actions.append(action)
-                # Track harvest targets
-                if action.startswith("HARVEST"):
-                    # This troll is harvesting at its current location
-                    pass
-                elif action.startswith("MOVE"):
-                    # Parse target
+                if action.startswith("MOVE"):
                     parts = action.split()
                     if len(parts) >= 4:
                         try:
@@ -165,7 +204,6 @@ class Bot:
                         except:
                             pass
 
-        # Consider training a new troll
         train = self._consider_training(my_inv, my_trolls, turn_num)
         if train:
             actions.append(train)
@@ -199,22 +237,20 @@ class Bot:
             for tree in trees:
                 if tree['x'] == tx and tree['y'] == ty and tree['fruits'] > 0:
                     return f"HARVEST {tid}"
-            # If on a tree with no fruits but close to capacity, move on
-            # (don't wait for fruit growth)
 
-        # 3. CHOP if on a tree and it's late game
-        if chop > 0 and turn > 200:
+        # 3. CHOP if on a tree and late game
+        if chop > 0 and turn > self.chopc['start_turn']:
             for tree in trees:
                 if tree['x'] == tx and tree['y'] == ty and tree['health'] > 0:
                     wood_gain = min(tree['size'], free)
                     if wood_gain > 0:
-                        # Chop if wood value exceeds fruit potential
                         remaining_fruit = tree['fruits']
-                        if wood_gain * 4 > remaining_fruit:
+                        if wood_gain * self.chopc['wood_value'] > remaining_fruit * self.chopc['wood_vs_fruit_ratio']:
                             return f"CHOP {tid}"
 
         # 4. MINE if near iron and need it
-        if chop > 0 and free > 0 and my_inv[IRON] < max(3, len([t for t in all_trolls if t['player'] == 0])):
+        n_trolls = len([t for t in all_trolls if t['player'] == 0])
+        if chop > 0 and free > 0 and my_inv[IRON] < max(self.minec['iron_threshold_base'], n_trolls):
             for ix, iy in self.iron_cells:
                 if abs(tx - ix) + abs(ty - iy) <= 1:
                     return f"MINE {tid}"
@@ -223,7 +259,7 @@ class Bot:
         if ct > 0:
             return self._move_toward(tid, tx, ty, sx, sy, shack_dist)
 
-        # 6. Find best target to move to
+        # 6. Find best target
         target = self._best_target(troll, trees, my_inv, all_trolls, shack_dist, turn, targeted)
         if target:
             bx, by = target
@@ -233,11 +269,8 @@ class Bot:
         return f"MOVE {tid} {self.width // 2} {self.height // 2}"
 
     def _move_toward(self, tid, tx, ty, gx, gy, shack_dist):
-        """Move toward a goal. Game engine handles pathfinding."""
-        # If we need to reach shack area, move toward nearest shack neighbor
         sx, sy = self.my_shack
         if (gx, gy) == (sx, sy) or self._near_shack(gx, gy):
-            # Find closest shack neighbor
             best_nbr = None
             best_d = 9999
             troll_dist = self.bfs(tx, ty)
@@ -252,25 +285,19 @@ class Bot:
         return f"MOVE {tid} {gx} {gy}"
 
     def _best_target(self, troll, trees, my_inv, all_trolls, shack_dist, turn, targeted):
-        """
-        Score all targets and return the best position.
-        Tries to spread trolls across different trees.
-        """
         tx, ty = troll['x'], troll['y']
         free = troll['free_carry']
         harvest = troll['harvest']
         speed = troll['speed']
-        sx, sy = self.my_shack
+        sc = self.scor
 
-        # Get distance from troll's position
-        on_shack = (tx == sx and ty == sy)
+        on_shack = (tx, ty) == self.my_shack
         if on_shack:
-            troll_dist = shack_dist  # from shack neighbors
+            troll_dist = shack_dist
         else:
             troll_dist = self.bfs(tx, ty)
 
         def d_to(x, y):
-            """Distance from troll to (x,y)."""
             if on_shack:
                 return self.dist(shack_dist, x, y) + 1
             return self.dist(troll_dist, x, y)
@@ -281,125 +308,82 @@ class Bot:
         for tree in trees:
             tree_x, tree_y = tree['x'], tree['y']
             d_t = d_to(tree_x, tree_y)
-            d_s = self.dist(shack_dist, tree_x, tree_y)  # tree to shack
+            d_s = self.dist(shack_dist, tree_x, tree_y)
 
             if d_t >= 9999 or d_s >= 9999:
                 continue
 
-            # Calculate harvestable fruits
             harvestable = min(tree['fruits'], free, harvest) if free > 0 and harvest > 0 else 0
 
-            # If tree has no fruits now, estimate future value
             future_fruits = 0
             if harvestable == 0 and free > 0 and harvest > 0 and tree['size'] >= 2:
-                # Tree might grow or produce fruits while we walk there
                 eff_speed = max(speed, 1)
                 turns_to_reach = max(1, d_t // eff_speed)
-                if tree['cd'] > 0 and tree['cd'] <= turns_to_reach + 2:
+                if tree['cd'] > 0 and tree['cd'] <= turns_to_reach + sc['future_fruit_cd_threshold']:
                     if tree['size'] >= 4:
-                        future_fruits = 1  # likely to have 1+ fruit by then
+                        future_fruits = sc['future_fruit_large_tree']
                     elif tree['size'] >= 2:
-                        future_fruits = 0.3  # might grow to next size
+                        future_fruits = sc['future_fruit_medium_tree']
 
             total_value = harvestable + future_fruits
             if total_value <= 0 and tree['fruits'] <= 0:
                 continue
 
-            # Round-trip cost
             eff_speed = max(speed, 1)
             travel_to = max(1, d_t / eff_speed)
             travel_back = max(1, d_s / eff_speed)
-            total_time = travel_to + travel_back + 2  # +1 harvest, +1 drop
+            total_time = travel_to + travel_back + 2
 
-            # Score: value per unit time
             score = total_value / max(total_time, 1)
 
-            # Preference adjustments
             if d_t <= speed:
-                score += 2.0  # can reach this turn!
+                score += sc['reach_bonus']
 
-            # Prefer trees we haven't over-assigned
             key = (tree_x, tree_y)
             trolls_on = targeted.get(key, 0)
             if trolls_on > 0:
-                score *= 0.7  # discourage but don't eliminate
+                score *= sc['spread_penalty']
 
-            # Prefer trees closer to us than opponent
-            # Use simpler heuristic: manhattan from opponent shack
             opp_dist = abs(tree_x - self.opp_shack[0]) + abs(tree_y - self.opp_shack[1])
             my_dist = d_t
             if my_dist < opp_dist:
-                score += 0.2
+                score += sc['closer_bonus']
 
-            # Near-water bonus (faster growth = more future value)
             if self.near_water[tree_x][tree_y]:
-                score += 0.1
+                score += sc['water_bonus']
 
             if score > best_score:
                 best_score = score
                 best_pos = (tree_x, tree_y)
 
         # Consider iron if we need it
-        if troll['chop'] > 0 and free > 0 and my_inv[IRON] < 4:
-            n_trolls = sum(1 for t in all_trolls if t['player'] == 0)
+        if troll['chop'] > 0 and free > 0 and my_inv[IRON] < sc['iron_threshold']:
             for ix, iy in self.iron_cells:
                 d = d_to(ix, iy)
                 if d < 9999:
-                    # Iron is critical for training trolls with chopPower
-                    score = 3.0 / max(d / max(speed, 1), 1)
-                    if score > best_score:
-                        best_score = score
+                    iron_score = sc['iron_base_score'] / max(d / max(speed, 1), 1)
+                    if iron_score > best_score:
+                        best_score = iron_score
                         best_pos = (ix, iy)
 
         return best_pos
 
     def _training_cost(self, n, m, c, h, ch):
         base = n
-        return (base + m*m, base + c*c, base + h*h, base + ch*ch)
+        return (base + m * m, base + c * c, base + h * h, base + ch * ch)
 
     def _consider_training(self, inv, trolls, turn):
         n = len(trolls)
-        if n >= 8:
+        if n >= self.trainc['max_trolls']:
             return None
 
-        # Configs: (move_speed, carry_capacity, harvest_power, chop_power)
-        # Ordered by preference for current game phase
-        if turn <= 20:
-            # Early: maximize number of trolls, go cheap
-            configs = [
-                (1, 1, 1, 0),
-                (2, 1, 1, 0),
-                (1, 2, 1, 0),
-                (1, 1, 2, 0),
-                (1, 1, 1, 1),
-                (2, 2, 1, 0),
-                (1, 2, 2, 0),
-                (2, 1, 2, 0),
-            ]
-        elif turn <= 80:
-            # Mid: balanced growth
-            configs = [
-                (2, 2, 1, 0),
-                (2, 1, 2, 0),
-                (1, 2, 2, 0),
-                (2, 2, 2, 0),
-                (2, 1, 1, 0),
-                (1, 1, 1, 0),
-                (2, 2, 1, 1),
-                (2, 1, 2, 1),
-                (1, 2, 2, 1),
-            ]
+        thresholds = self.trainc['phase_thresholds']
+        if turn <= thresholds[0]:
+            configs = self.trainc['early_configs']
+        elif turn <= thresholds[1]:
+            configs = self.trainc['mid_configs']
         else:
-            # Late: include chop for wood
-            configs = [
-                (2, 2, 2, 1),
-                (2, 2, 1, 1),
-                (2, 1, 2, 1),
-                (1, 2, 2, 1),
-                (2, 2, 2, 0),
-                (3, 2, 1, 0),
-                (2, 3, 2, 0),
-            ]
+            configs = self.trainc['late_configs']
 
         for config in configs:
             m, c, h, ch = config
@@ -407,14 +391,38 @@ class Bot:
             can_afford = (inv[PLUM] >= cost[0] and inv[LEMON] >= cost[1] and
                          inv[APPLE] >= cost[2] and inv[IRON] >= cost[3])
             if can_afford:
-                # Always train if we can afford it - more trolls = more actions
                 return f"TRAIN {m} {c} {h} {ch}"
 
         return None
 
 
+def load_config(path):
+    with open(path, 'r') as f:
+        cfg = json.load(f)
+    # Merge with defaults so partial configs work
+    merged = {}
+    for section in DEFAULT_CONFIG:
+        if section == 'name':
+            merged[section] = cfg.get(section, DEFAULT_CONFIG[section])
+        elif isinstance(DEFAULT_CONFIG[section], dict):
+            merged[section] = dict(DEFAULT_CONFIG[section])
+            merged[section].update(cfg.get(section, {}))
+            # Special handling for training configs (lists of lists)
+            for key in ['early_configs', 'mid_configs', 'late_configs']:
+                if key in cfg.get(section, {}):
+                    merged[section][key] = cfg[section][key]
+    return merged
+
+
 def main():
-    bot = Bot()
+    config = None
+    if '--config' in sys.argv:
+        idx = sys.argv.index('--config')
+        if idx + 1 < len(sys.argv):
+            config_path = sys.argv[idx + 1]
+            config = load_config(config_path)
+
+    bot = Bot(config)
     turn = 0
     while True:
         turn += 1
