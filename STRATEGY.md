@@ -1,130 +1,157 @@
 # Bot Strategy Deep-Dive
 
-## Two Bot Versions
+## Current State
 
-| File | Purpose | When to use |
-|------|---------|-------------|
-| `arena_bot.py` | **Arena submission** — our best bot | CodinGame arena, competitive play |
-| `bot.py` | Configurable bot with `--config` flag | Self-play A/B testing, parameter tuning |
+`arena_bot.py` is the submission bot. It was retuned for Wood 1 and promoted the account to **Bronze**. It now keeps two strategy modes in one file:
 
-Both share the same core logic. `arena_bot.py` has additional features (combo actions, planting) and is the one to submit. `bot.py` reads parameters from JSON configs for iteration.
+| Mode | Detection | Rules Shape | Current Plan |
+|------|-----------|-------------|--------------|
+| Wood 1 / league 2 | no iron cells on map | 100 turns, fruit-only scoring, no water/iron/wood | close shack orchard, banana-first planting, no chop training |
+| Bronze / league 3 | iron cells exist | 300 turns, water boosts, iron, chop/mine, wood scores 4 | water-adjacent orchard, normal harvesting, late chop/mine logic |
 
-## Arena Bot Decision Flow (arena_bot.py)
+Important referee correction: each troll can only perform one action per turn. Do not output same-troll `MOVE;HARVEST`, `MOVE;DROP`, etc. The old combo strategy was based on a bad reading of turn order.
 
-Per troll, priority chain:
+## Decision Flow
+
+Per troll, `arena_bot.py` currently uses:
 
 ```
-1. DROP               carrying AND near shack → DROP
-   MOVE+DROP combo    carrying AND can reach shack neighbor this turn → MOVE+DROP
-2. HARVEST            on tree with fruits AND have capacity → HARVEST
-   MOVE+HARVEST combo have capacity AND can reach fruitful tree this turn → MOVE+HARVEST
-3. PLANT              on grass+water cell near shack, carrying fruit, turn ≤ 80, planted < 2 → PLANT
-4. CHOP               on tree, turn > 180, wood value exceeds remaining fruit potential
-   CHOP aggressive    on tree, turn > 220, wood value > fruit count
-5. MINE               adjacent to iron, need iron, have chopPower → MINE
-6. FIND TARGET        scoring function picks best tree/iron → MOVE
-7. FALLBACK           MOVE toward center of map
+1. DEDICATED PLANTING   assigned PICK -> MOVE -> PLANT job
+2. DROP                 carrying AND near shack -> DROP
+3. RETURN               carrying AND not near shack -> MOVE to shack neighbor
+4. HARVEST              on fruiting tree with capacity -> HARVEST
+5. OPPORTUNISTIC PLANT  on valid plant spot carrying a seed -> PLANT
+6. CHOP                 Bronze only, on tree, late/value-based
+7. MINE                 Bronze only, adjacent iron and iron is low
+8. FIND TARGET          score trees/iron -> MOVE
+9. FALLBACK             MOVE toward map center
 ```
 
-After all trolls get actions, `_consider_training()` checks if we can afford a new troll.
+After all troll actions are chosen, `_consider_training()` may append a `TRAIN` action.
 
-## Key Strategy Improvements (arena_bot.py vs baseline)
+## Wood 1 Strategy
 
-### 1. Combo Actions (MOVE+DROP, MOVE+HARVEST)
+Wood 1 has no water, no iron, no wood score, and only 100 turns. The bot uses a short-horizon fruit economy:
 
-The game engine processes actions in order: Move → Harvest → Drop. By issuing `MOVE 0 5 3;DROP 0` in one turn, the troll moves to a shack neighbor AND drops items in the same turn. This saves ~1 turn per delivery cycle.
+- Detect Wood 1 with `self.low_league = len(self.iron_cells) == 0`.
+- Plant up to 4 trees near the shack (`shack_dist <= 4`).
+- Prefer `BANANA` seeds for planting because bananas are not used for training and grow fastest.
+- Reserve plum/lemon/apple for training; use them as seeds only when inventory is high.
+- Ignore iron cost in training affordability.
+- Train only `chopPower=0` trolls and cap at 7 trolls.
+- Stop assigning new planting jobs after turn 30 and abandon unfinished planting jobs after turn 45.
+- Deconflict tree targets: in Wood 1, avoid sending multiple friendly trolls to the same target tree and avoid friendly-occupied fruit trees.
 
-Similarly, `MOVE 0 8 4;HARVEST 0` moves to a tree and harvests it in one turn, saving 1 turn per harvest cycle.
+Latest Wood 1 benchmark:
 
-Impact: ~1 turn saved per harvest-drop round trip. Over 300 turns with multiple trolls, this adds up to significant score gains.
+```bash
+python3 self_play.py --bot1 "python3 /work/arena_bot.py" --bot2 "python3 /work/bot.py" --seeds 50 --start 1 --league 2
+```
 
-### 2. Opportunistic Planting (PLANT)
+Result: **48W-2L-0T**, average diff **+18.9**.
 
-If a troll carrying fruit happens to be on a grass+water cell near our shack that doesn't already have a tree, it plants (up to 2 trees max). Trees near water grow faster (reduced cooldown), creating long-term fruit factories.
+Variant notes from the Wood 1 tuning pass:
 
-Currently limited: only plants when a troll happens to be on a good spot. A full planting strategy would use PICK to ferry fruits from shack to planting locations.
+| Variant | 30-seed Result vs `bot.py` | Avg Diff | Takeaway |
+|---------|----------------------------|----------|----------|
+| 4 close planted trees | 29W-1L | +20.9 | Best tested cap |
+| 5 close planted trees | 28W-2L | +19.3 | Slight overcommit |
+| 6 close planted trees | 29W-1L | +17.7 | Overplants |
+| 7 close planted trees | 30W-0L | +18.3 | Wins sample but lower average |
 
-### 3. Value-Based Chopping
+## Bronze Strategy
 
-Instead of always chopping after turn 200, the arena bot:
-- After turn 180: only chops if the tree has no fruits (avoid destroying productive trees)
-- After turn 220: chops if wood value (size × 4) > remaining fruits
+Bronze adds water, iron, chopping, mining, wood score, and 300 turns. The current bot has Bronze support, but it has not yet been retuned after promotion.
 
-### 4. Growth Prediction
+Bronze behavior today:
 
-Trees with `cd > 0` will produce fruit in `cd` turns. The bot estimates future fruit value based on whether the troll will arrive in time to harvest the upcoming fruit. Trees with `cd=0` and no fruits are estimated to produce soon.
+- Plant up to 3 water-adjacent trees near the shack (`shack_dist <= 5`).
+- Seed priority is `APPLE`, `PLUM`, `LEMON`, then `BANANA`.
+- Apple is preferred near water because cooldown is very low in Bronze rules.
+- Training cap is 10 trolls.
+- Training includes chopPower configs after early game, subject to iron affordability.
+- Mine iron when iron inventory is below `max(3, troll_count)`.
+- Chop late: starts after turn 180 on unproductive trees, with an aggressive value fallback after turn 220.
 
-### 5. Training Improvements
+Latest Bronze benchmark before the Wood 1-specific cleanup:
 
-- Troll cap raised from 8 to 10
-- Always tries cheapest affordable config first
-- Ensures at least 2 trolls have chopPower by mid-game
-- Skips non-chop configs in mid-game if we need chop trolls and can afford them
+```bash
+python3 self_play.py --bot1 "python3 /work/arena_bot.py" --bot2 "python3 /work/bot.py" --seeds 50 --start 1 --league 3
+```
+
+Result from the earlier pass: **35W-12L-3T**, average diff **+28.1**.
+
+Re-run this before making Bronze decisions, because the current file has since received target deconfliction and low-league branching changes.
 
 ## Target Scoring
 
-Each troll without a current task scores all fruit trees:
+Each idle troll scores trees roughly as:
 
 ```
 score = (harvestable_fruits + future_fruit_value) / round_trip_time
-
-Bonuses:
-  +2.0  if reachable this turn (may get combo harvest)
-  +0.2  if closer to us than opponent shack (manhattan)
-  +0.1  if tree is near water (faster growth)
-
-Penalties:
-  ×0.7  per troll already targeting this tree (spread factor)
 ```
 
-Round-trip time = `(distance_to_tree / speed) + 1 + (distance_to_shack / speed) + 1`
+Bonuses:
 
-Iron cells scored as `3.0 / (distance / speed)` when iron inventory < max(3, trollCount).
+- `+2.0` if the tree is reachable this turn.
+- `+0.2` if closer to our current path than the opponent shack by Manhattan proxy.
+- `+0.1` if the tree is near water.
 
-## Training Logic
+Penalties / filters:
 
-### Arena Bot (v5)
+- Bronze: multiply by `0.7` if another troll is already targeting the tree.
+- Wood 1: skip trees already targeted by a friendly troll.
+- Wood 1: skip fruit trees already occupied by an empty friendly troll.
 
-Tries configs in order until one is affordable. Cheapest first within each phase:
+Iron cells are scored as `3.0 / (distance / speed)` when a chop-capable troll has capacity and iron inventory is low.
 
-| Phase | Turns | Config priorities | Rationale |
-|-------|-------|-------------------|-----------|
-| Early | 1-20 | (1,1,1,0), (1,2,1,0), (2,1,1,0), (1,1,2,0), (1,1,1,1), ... | More trolls = more actions; carry=2 is very efficient |
-| Mid | 21-80 | (1,1,1,0), (1,2,1,0), (2,1,1,0), (1,1,2,0), ..., (1,2,1,1), (2,2,1,1) | Balanced; start including chopPower |
-| Late | 81+ | (1,1,1,0), (1,2,1,0), (2,2,1,0), ..., (2,2,1,1), (2,2,2,1) | ChopPower for late-game wood |
+## Training
 
-Hard cap: 10 trolls. Iron check skips chopPower configs when iron is insufficient.
+Training cost is `existing_trolls + stat^2` for each stat. In Wood 1, the fourth cost is reserved/unavailable, so the bot ignores iron affordability and only trains `chopPower=0`.
 
-## Pathfinding
+Wood 1:
 
-BFS is cached per cell. Shack cells are non-walkable but handled: trolls on the shack can pathfind to its walkable neighbors with distance=1. Distance maps computed lazily and cached.
+| Phase | Turns | Configs |
+|-------|-------|---------|
+| Early | 1-25 | `(1,1,1,0)`, `(2,1,1,0)`, `(1,2,1,0)`, `(1,1,2,0)`, then 2-stat variants |
+| Mid | 26-65 | Prefer `(2,2,1,0)`, `(2,1,2,0)`, `(1,2,2,0)`, `(2,2,2,0)` |
+| Late | 66+ | No training |
 
-## Performance
+Bronze:
 
-Each turn: <1ms. No timeouts across 1000+ games. BFS caching means turn 1 is slightly slower (all distance maps computed), subsequent turns are fast.
+| Phase | Turns | Intent |
+|-------|-------|--------|
+| Early | 1-20 | Cheap growth, mostly no chop |
+| Mid | 21-80 | Balanced workers, start adding chopPower |
+| Late | 81+ | Include chopPower for wood and iron access |
 
-## Score Benchmarks
+## Next Bronze Work
 
-| Opponent | Win Rate | Avg Margin |
-|----------|----------|------------|
-| examplebot | 100% (50/50) | +80 points |
-| v001 baseline (self-play) | 30% W / 26% L / 44% T | +0.7 points avg |
-| Mirror match (self) | ~5% W / 25% L / 70% T | -0.9 points (P2 advantage) |
+1. Re-run league 3 baseline after the latest docs/code state:
 
-## What We Don't Do Yet
+```bash
+python3 self_play.py --bot1 "python3 /work/arena_bot.py" --bot2 "python3 /work/bot.py" --seeds 50 --start 1 --league 3
+```
 
-1. **Dedicated planting strategy**: Only plants opportunistically. Full strategy: PICK fruit from shack, carry to good spot, PLANT, then harvest the new tree.
+2. Build a few local opponents so we are not only beating our old baseline:
 
-2. **PICK action**: Never used. Could ferry iron/fruit from shack to strategic locations.
+- Greedy no-plant harvester.
+- Fast-train swarm with minimal planting.
+- Heavy planting bot.
+- Wood-focused chop bot for Bronze.
 
-3. **Targeted tree chopping**: Don't send trolls specifically to chop valuable trees. Only chop when already on a tree.
+3. Improve Bronze specifically:
 
-4. **Opponent modeling**: Don't track opponent troll positions or predict which trees they'll contest. Don't exploit fruit duplication mechanic deliberately.
+- Targeted chopping: send chop-capable trolls to high-value trees before they happen to stand on them.
+- Smarter mining: mine iron based on next desired `TRAIN`, not a static threshold.
+- Opponent contesting: deliberately share/contest high-yield trees to exploit duplication.
+- Bronze plant cap/type tuning: retest 2/3/4 water-adjacent plants and seed order.
 
-5. **Coordinated multi-troll harvesting**: Only apply 0.7 spread penalty, don't model the benefit of sharing trees (duplication).
+## Files
 
-6. **Steal-from-opponent strategies**: Don't deliberately contest opponent's trees (even though duplication makes this beneficial).
-
-7. **Iron-dependent training optimization**: Don't optimally schedule iron mining for upcoming training needs.
-
-8. **Map-specific adaptation**: Don't adjust strategy based on map topology (clustered vs spread trees, iron positions relative to shack).
+| File | Purpose |
+|------|---------|
+| `arena_bot.py` | Submission bot; current best |
+| `bot.py` | Older configurable baseline; useful as a sparring partner, not proof of ladder strength |
+| `self_play.py` | Batch runner |
+| `arena_bot_backup.py` | Old pre-rewrite arena bot |

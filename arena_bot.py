@@ -2,8 +2,8 @@
 Troll Farm Bot v5 — Arena competitive strategy
 
 Built on proven v4 baseline with improvements:
-1. Combo actions: MOVE+DROP, MOVE+HARVEST (halves round-trip time)
-2. Opportunistic PLANT on good spots (grass+water near shack)
+1. Referee-legal one-action turns with coordinated target selection
+2. Dedicated early PICK -> PLANT flow on good spots (grass+water near shack)
 3. Growth-aware target scoring using tree cooldown
 4. Smarter training: always try cheapest first, ensure chopPower trolls exist
 5. Value-based chopping: only chop when wood exceeds remaining fruit potential
@@ -34,6 +34,7 @@ class Bot:
         self.near_water = [[False] * self.height for _ in range(self.width)]
         self._bfs_cache = {}
         self.tree_cells = set()
+        self.low_league = False
 
         for x in range(self.width):
             for y in range(self.height):
@@ -46,6 +47,8 @@ class Bot:
                     self.opp_shack = (x, y)
                 elif ch == '+':
                     self.iron_cells.add((x, y))
+
+        self.low_league = len(self.iron_cells) == 0
 
         for x in range(self.width):
             for y in range(self.height):
@@ -70,16 +73,18 @@ class Bot:
 
         self.shack_dist = self.bfs(sx, sy, True, self.shack_nbrs)
 
-        # Good planting spots: grass near water, close to shack
+        # Good planting spots: water-adjacent in Bronze+, close to shack in Wood 1.
         self.plant_spots = []
         for x in range(self.width):
             for y in range(self.height):
-                if (self.walkable[x][y] and self.near_water[x][y]
-                        and self.dist(self.shack_dist, x, y) > 0
-                        and self.dist(self.shack_dist, x, y) <= 5):
+                d = self.dist(self.shack_dist, x, y)
+                good_low_league_spot = self.low_league and 0 < d <= 4
+                good_full_league_spot = (not self.low_league) and self.near_water[x][y] and 0 < d <= 5
+                if self.walkable[x][y] and (good_low_league_spot or good_full_league_spot):
                     self.plant_spots.append((x, y))
         self.planted_cells = set()
-        self.max_plants = 2
+        self.max_plants = 4 if self.low_league else 3
+        self.planters = {}
 
     def bfs(self, sx, sy, is_shack=False, shack_nbrs=None):
         key = (sx, sy)
@@ -167,6 +172,10 @@ class Bot:
                             targeted_trees[(mx, my_)] = targeted_trees.get((mx, my_), 0) + 1
                         except (ValueError, IndexError):
                             pass
+                    if len(cmd) >= 3 and cmd[0] == 'PICK':
+                        fi = TREE_TO_ITEM.get(cmd[2].upper())
+                        if fi is not None and my_inv[fi] > 0:
+                            my_inv[fi] -= 1
 
         train = self._consider_training(my_inv, my_trolls, turn_num)
         if train:
@@ -199,23 +208,15 @@ class Bot:
         else:
             troll_dist = self.bfs(tx, ty)
 
+        planter_action = self._planter_action(troll, trees, my_inv, all_trolls, troll_dist, turn)
+        if planter_action:
+            return planter_action
+
         # --- PRIORITY 1: DROP if carrying items ---
         if ct > 0:
             # Already adjacent to shack — just DROP
             if self._near_shack(tx, ty):
                 return f"DROP {tid}"
-            # Can reach shack neighbor this turn — MOVE+DROP combo
-            if speed > 0:
-                best_nbr = None
-                best_d = 9999
-                for nx, ny in self.shack_nbrs:
-                    d = self.dist(troll_dist, nx, ny)
-                    if d < best_d:
-                        best_d = d
-                        best_nbr = (nx, ny)
-                if best_nbr and best_d <= speed:
-                    return f"MOVE {tid} {best_nbr[0]} {best_nbr[1]};DROP {tid}"
-            # Can't reach this turn — move toward shack
             return self._move_to_shack(tid, tx, ty, troll_dist)
 
         # --- PRIORITY 2: HARVEST if on tree with fruits and have capacity ---
@@ -224,43 +225,17 @@ class Bot:
                 if tree['x'] == tx and tree['y'] == ty and tree['fruits'] > 0:
                     return f"HARVEST {tid}"
 
-        # --- PRIORITY 2b: COMBO MOVE+HARVEST for reachable trees ---
-        # Use same scoring logic as _best_target for consistency
-        if free > 0 and harvest_pow > 0 and speed > 0 and not on_shack:
-            best_combo = None
-            best_combo_score = -9999
-            eff_speed = max(speed, 1)
-            for tree in trees:
-                if tree['fruits'] <= 0:
-                    continue
-                d_t = self.dist(troll_dist, tree['x'], tree['y'])
-                d_s = self.dist(shack_dist, tree['x'], tree['y'])
-                if d_t <= 0 or d_t > speed or d_s >= 9999:
-                    continue
-                harvestable = min(tree['fruits'], free, harvest_pow)
-                travel_to = max(1, d_s / eff_speed)
-                travel_back = max(1, d_s / eff_speed)
-                total_time = 1 + travel_back + 2  # 1 turn to reach (combo), +2 for harvest+drop
-                score = harvestable / max(total_time, 1)
-                score += 3.0  # big bonus for instant harvest
-                spread_key = (tree['x'], tree['y'])
-                trolls_on = targeted.get(spread_key, 0)
-                if trolls_on > 0:
-                    score *= 0.7
-                if score > best_combo_score:
-                    best_combo_score = score
-                    best_combo = tree
-            if best_combo:
-                return f"MOVE {tid} {best_combo['x']} {best_combo['y']};HARVEST {tid}"
-
         # --- PRIORITY 3: PLANT if on good spot and carrying fruit ---
-        if (turn <= 80 and len(self.planted_cells) < self.max_plants
-                and self.walkable[tx][ty] and self.near_water[tx][ty]
+        can_plant_here = self.near_water[tx][ty] or self.low_league
+        plant_deadline = 35 if self.low_league else 80
+        if (turn <= plant_deadline and len(self.planted_cells) < self.max_plants
+                and self.walkable[tx][ty] and can_plant_here
                 and (tx, ty) not in self.tree_cells
-                and (tx, ty) not in self.planted_cells
-                and not self._near_shack(tx, ty)):
-            for fi in [APPLE, PLUM, LEMON, BANANA]:
-                if carry[fi] > 0 and my_inv[fi] > 3:
+                and (tx, ty) not in self.planted_cells):
+            seed_order = [BANANA, PLUM, LEMON, APPLE] if self.low_league else [APPLE, PLUM, LEMON, BANANA]
+            min_reserve = 1 if self.low_league else 3
+            for fi in seed_order:
+                if carry[fi] > 0 and my_inv[fi] > min_reserve:
                     self.planted_cells.add((tx, ty))
                     return f"PLANT {tid} {ITEM_TO_TREE[fi]}"
 
@@ -313,6 +288,126 @@ class Bot:
         if best_nbr and best_d < 9999:
             return f"MOVE {tid} {best_nbr[0]} {best_nbr[1]}"
         return f"MOVE {tid} {sx} {sy}"
+
+    def _best_shack_exit_toward(self, target):
+        best_nbr = None
+        best_score = 9999
+        tx, ty = target
+        target_dist = self.bfs(tx, ty)
+        for nx, ny in self.shack_nbrs:
+            d = self.dist(target_dist, nx, ny)
+            if d < best_score:
+                best_score = d
+                best_nbr = (nx, ny)
+        return best_nbr
+
+    def _choose_seed_type(self, inv, n_trolls):
+        if self.low_league:
+            reserves = {
+                BANANA: 0,
+                PLUM: n_trolls + 2,
+                LEMON: n_trolls + 2,
+                APPLE: n_trolls + 2,
+            }
+            for fi in (BANANA, PLUM, LEMON, APPLE):
+                if inv[fi] > reserves[fi]:
+                    return fi
+            return None
+
+        # Apple trees near water are the strongest factory: they grow every 2 turns.
+        # Keep a small reserve so PICK does not starve the next cheap TRAIN.
+        reserves = {
+            APPLE: n_trolls + 3,
+            PLUM: n_trolls + 2,
+            LEMON: n_trolls + 2,
+            BANANA: 1,
+        }
+        for fi in (APPLE, PLUM, LEMON, BANANA):
+            if inv[fi] > reserves[fi]:
+                return fi
+        return None
+
+    def _assign_plant_target(self, tid, tx, ty, inv, all_trolls, troll_dist, turn):
+        plant_deadline = 30 if self.low_league else 70
+        if turn > plant_deadline or len(self.planted_cells) >= self.max_plants:
+            return None
+
+        seed = self._choose_seed_type(inv, sum(1 for t in all_trolls if t['player'] == 0))
+        if seed is None:
+            return None
+
+        reserved = {target for uid, (target, _) in self.planters.items() if uid != tid}
+        occupied = {(t['x'], t['y']) for t in all_trolls}
+        best = None
+        best_score = 9999
+        for px, py in self.plant_spots:
+            pos = (px, py)
+            if pos in self.tree_cells or pos in self.planted_cells or pos in reserved or pos in occupied:
+                continue
+            if not self.low_league and self._near_shack(px, py):
+                continue
+            d = self.dist(troll_dist, px, py)
+            if d >= 9999:
+                continue
+            shack_d = self.dist(self.shack_dist, px, py)
+            score = d + shack_d * 0.5
+            if score < best_score:
+                best_score = score
+                best = pos
+
+        if best is None:
+            return None
+
+        self.planters[tid] = (best, seed)
+        return self.planters[tid]
+
+    def _planter_action(self, troll, trees, inv, all_trolls, troll_dist, turn):
+        tid = troll['id']
+        tx, ty = troll['x'], troll['y']
+        carry = troll['carry']
+        ct = troll['carry_total']
+        free = troll['free_carry']
+
+        abandon_turn = 45 if self.low_league else 95
+        if turn > abandon_turn:
+            self.planters.pop(tid, None)
+            return None
+
+        plan = self.planters.get(tid)
+        if plan:
+            target, seed = plan
+            if target in self.tree_cells or target in self.planted_cells:
+                self.planters.pop(tid, None)
+                plan = None
+            elif ct > 0 and carry[seed] == 0:
+                self.planters.pop(tid, None)
+                plan = None
+
+        if plan is None and ct == 0 and free > 0:
+            plan = self._assign_plant_target(tid, tx, ty, inv, all_trolls, troll_dist, turn)
+
+        if not plan:
+            return None
+
+        target, seed = plan
+        px, py = target
+        if ct == 0:
+            if self._near_shack(tx, ty) and not self._on_shack(tx, ty) and inv[seed] > 0:
+                return f"PICK {tid} {ITEM_TO_TREE[seed]}"
+            if self._on_shack(tx, ty):
+                exit_cell = self._best_shack_exit_toward(target)
+                if exit_cell:
+                    return f"MOVE {tid} {exit_cell[0]} {exit_cell[1]}"
+            return self._move_to_shack(tid, tx, ty, troll_dist)
+
+        if carry[seed] > 0:
+            if (tx, ty) == target and (tx, ty) not in self.tree_cells:
+                self.planted_cells.add(target)
+                self.planters.pop(tid, None)
+                return f"PLANT {tid} {ITEM_TO_TREE[seed]}"
+            return f"MOVE {tid} {px} {py}"
+
+        return None
 
     def _best_target(self, troll, trees, my_inv, all_trolls, shack_dist, turn, targeted):
         tx, ty = troll['x'], troll['y']
@@ -378,8 +473,22 @@ class Bot:
             # Spread penalty
             key = (tree_x, tree_y)
             trolls_on = targeted.get(key, 0)
+            if self.low_league and trolls_on > 0:
+                continue
             if trolls_on > 0:
                 score *= 0.7
+
+            occupied_by_friend = False
+            for other in all_trolls:
+                if (other['player'] == 0 and other['id'] != troll['id']
+                        and other['x'] == tree_x and other['y'] == tree_y
+                        and other['carry_total'] == 0):
+                    occupied_by_friend = True
+                    break
+            if occupied_by_friend:
+                if self.low_league:
+                    continue
+                score *= 0.5
 
             # Territory: prefer closer to us than opponent
             opp_dist = abs(tree_x - self.opp_shack[0]) + abs(tree_y - self.opp_shack[1])
@@ -414,13 +523,32 @@ class Bot:
 
     def _consider_training(self, inv, trolls, turn):
         n = len(trolls)
-        if n >= 10:
+        max_trolls = 7 if self.low_league else 10
+        if n >= max_trolls:
             return None
 
-        # Ensure we have chop trolls by mid-game
-        chop_count = sum(1 for t in trolls if t['chop'] > 0)
-
-        if turn <= 20:
+        if self.low_league:
+            if turn <= 25:
+                configs = [
+                    (1, 1, 1, 0),
+                    (2, 1, 1, 0),
+                    (1, 2, 1, 0),
+                    (1, 1, 2, 0),
+                    (2, 2, 1, 0),
+                    (2, 1, 2, 0),
+                    (1, 2, 2, 0),
+                ]
+            elif turn <= 65:
+                configs = [
+                    (2, 2, 1, 0),
+                    (2, 1, 2, 0),
+                    (1, 2, 2, 0),
+                    (2, 2, 2, 0),
+                    (1, 1, 1, 0),
+                ]
+            else:
+                configs = []
+        elif turn <= 20:
             # Early: maximize troll count
             configs = [
                 (1, 1, 1, 0),
@@ -462,12 +590,14 @@ class Bot:
 
         for config in configs:
             m, c, h, ch = config
+            if self.low_league and ch > 0:
+                continue
             # Skip chopPower configs when we have no iron
             if ch > 0 and inv[IRON] < n + ch * ch:
                 continue
             cost = self._training_cost(n, m, c, h, ch)
             can_afford = (inv[PLUM] >= cost[0] and inv[LEMON] >= cost[1] and
-                         inv[APPLE] >= cost[2] and inv[IRON] >= cost[3])
+                         inv[APPLE] >= cost[2] and (self.low_league or inv[IRON] >= cost[3]))
             if can_afford:
                 return f"TRAIN {m} {c} {h} {ch}"
 

@@ -10,7 +10,7 @@ Troll Farm is a 2-player turn-based strategy game from the CodinGame Spring Chal
 
 **Entities:** Trolls (units) and Trees (PLUM, LEMON, APPLE, BANANA).
 
-### Actions (per troll, one per turn, semicolon-separated)
+### Actions (semicolon-separated; each troll at most once per turn)
 | Action | Description |
 |--------|-------------|
 | `MOVE id x y` | Move troll toward cell (x,y), up to movementSpeed cells |
@@ -79,6 +79,13 @@ Map characters: `.`=grass, `~`=water, `#`=rock, `+`=iron, `0`=your shack, `1`=op
 ### Output
 One line per turn. Multiple commands separated by `;`.
 Example: `MOVE 0 5 3;HARVEST 1;TRAIN 2 3 1 0`
+
+Important: the referee rejects using the same troll twice in one turn. `MOVE 0 5 3;HARVEST 0` and `MOVE 0 5 3;DROP 0` are invalid for troll 0 even though move/harvest/drop resolve in different phases.
+
+### League Notes
+
+- **Wood 1 / league 2**: 100 turns, height 8, no water/iron/wood, fruit-only score. Inventory/carry fields for iron and wood are reserved zeros. Training effectively costs only plum/lemon/apple because chopPower is unavailable.
+- **Bronze / league 3**: 300 turns, water, iron, chopping, mining, and wood scoring are active.
 
 ## Key Game Constants (from source)
 - PLANT_COOLDOWN = [8, 8, 9, 6] (PLUM, LEMON, APPLE, BANANA)
