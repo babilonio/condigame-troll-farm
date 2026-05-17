@@ -429,7 +429,6 @@ class Bot:
 
         best_score = -9999
         best_pos = None
-        opp_positions = [(t['x'], t['y']) for t in all_trolls if t['player'] == 1]
 
         for tree in trees:
             tree_x, tree_y = tree['x'], tree['y']
@@ -471,49 +470,41 @@ class Bot:
             if d_t <= speed:
                 score += 2.0
 
-            # Spread penalty
+            # Bronze can profit from two trolls harvesting the same tree: when
+            # concurrent harvesters exhaust the last fruit, the referee lets
+            # each harvester receive it. Encourage light stacking, not crowds.
             key = (tree_x, tree_y)
             trolls_on = targeted.get(key, 0)
             if self.low_league and trolls_on > 0:
                 continue
-            if trolls_on > 0:
-                score *= 0.7
+            if trolls_on == 1 and tree['fruits'] > 0:
+                score += 0.7
+            elif trolls_on > 0:
+                score *= 0.45
 
             occupied_by_friend = False
+            occupied_by_opponent = False
             for other in all_trolls:
-                if (other['player'] == 0 and other['id'] != troll['id']
-                        and other['x'] == tree_x and other['y'] == tree_y
-                        and other['carry_total'] == 0):
-                    occupied_by_friend = True
-                    break
+                if other['x'] == tree_x and other['y'] == tree_y and other['carry_total'] == 0:
+                    if other['player'] == 0 and other['id'] != troll['id']:
+                        occupied_by_friend = True
+                    elif other['player'] == 1:
+                        occupied_by_opponent = True
             if occupied_by_friend:
                 if self.low_league:
                     continue
-                score *= 0.5
+                if tree['fruits'] > 0:
+                    score += 0.9
+                else:
+                    score *= 0.5
+            if occupied_by_opponent and tree['fruits'] > 0 and not self.low_league:
+                score += 1.2
 
             # Territory: prefer closer to us than opponent
             opp_dist = abs(tree_x - self.opp_shack[0]) + abs(tree_y - self.opp_shack[1])
             my_dist = d_t
             if my_dist < opp_dist:
                 score += 0.2
-
-            # Bronze pressure: modestly contest fruit the opponent is near,
-            # or trees that sit on their side of the map.
-            if not self.low_league:
-                pressure_bonus = 0.0
-                if tree['fruits'] > 0 and opp_positions:
-                    nearest_opp = min(abs(tree_x - ox) + abs(tree_y - oy) for ox, oy in opp_positions)
-                    if nearest_opp <= 2:
-                        pressure_bonus = 0.18
-                    elif nearest_opp <= 4:
-                        pressure_bonus = 0.08
-
-                if opp_dist + 1 < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.12)
-                elif opp_dist < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.06)
-
-                score += pressure_bonus
 
             # Water bonus
             if self.near_water[tree_x][tree_y]:

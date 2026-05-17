@@ -3,7 +3,7 @@ Troll Farm Bot v5 — Arena competitive strategy
 
 Built on proven v4 baseline with improvements:
 1. Referee-legal one-action turns with coordinated target selection
-2. Dedicated early PICK -> PLANT flow on good spots (grass+water near shack)
+2. Dedicated early PICK -> PLANT flow in Wood 1 only; Bronze planting disabled
 3. Growth-aware target scoring using tree cooldown
 4. Smarter training: always try cheapest first, ensure chopPower trolls exist
 5. Value-based chopping: only chop when wood exceeds remaining fruit potential
@@ -228,7 +228,7 @@ class Bot:
         # --- PRIORITY 3: PLANT if on good spot and carrying fruit ---
         can_plant_here = self.near_water[tx][ty] or self.low_league
         plant_deadline = 35 if self.low_league else 80
-        if (turn <= plant_deadline and len(self.planted_cells) < self.max_plants
+        if (self.low_league and turn <= plant_deadline and len(self.planted_cells) < self.max_plants
                 and self.walkable[tx][ty] and can_plant_here
                 and (tx, ty) not in self.tree_cells
                 and (tx, ty) not in self.planted_cells):
@@ -368,6 +368,10 @@ class Bot:
         ct = troll['carry_total']
         free = troll['free_carry']
 
+        if not self.low_league:
+            self.planters.pop(tid, None)
+            return None
+
         abandon_turn = 45 if self.low_league else 95
         if turn > abandon_turn:
             self.planters.pop(tid, None)
@@ -429,7 +433,6 @@ class Bot:
 
         best_score = -9999
         best_pos = None
-        opp_positions = [(t['x'], t['y']) for t in all_trolls if t['player'] == 1]
 
         for tree in trees:
             tree_x, tree_y = tree['x'], tree['y']
@@ -496,24 +499,6 @@ class Bot:
             my_dist = d_t
             if my_dist < opp_dist:
                 score += 0.2
-
-            # Bronze pressure: modestly contest fruit the opponent is near,
-            # or trees that sit on their side of the map.
-            if not self.low_league:
-                pressure_bonus = 0.0
-                if tree['fruits'] > 0 and opp_positions:
-                    nearest_opp = min(abs(tree_x - ox) + abs(tree_y - oy) for ox, oy in opp_positions)
-                    if nearest_opp <= 2:
-                        pressure_bonus = 0.18
-                    elif nearest_opp <= 4:
-                        pressure_bonus = 0.08
-
-                if opp_dist + 1 < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.12)
-                elif opp_dist < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.06)
-
-                score += pressure_bonus
 
             # Water bonus
             if self.near_water[tree_x][tree_y]:

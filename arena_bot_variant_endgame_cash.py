@@ -191,6 +191,25 @@ class Bot:
     def _on_shack(self, x, y):
         return (x, y) == self.my_shack
 
+    def _move_turns(self, distance, speed):
+        if distance <= 0:
+            return 0
+        speed = max(speed, 1)
+        return (distance + speed - 1) // speed
+
+    def _can_bank_fruit_before_horizon(self, d_to_tree, d_to_shack, speed, turn, wait_turns=0):
+        if self.low_league:
+            return True
+        if d_to_tree >= 9999 or d_to_shack >= 9999:
+            return False
+
+        move_to_tree = self._move_turns(d_to_tree, speed)
+        # shack_dist gives shack-adjacent cells distance 1, but DROP only needs adjacency.
+        move_back = self._move_turns(max(0, d_to_shack - 1), speed)
+        harvest_and_drop = 2
+        last_drop_turn = turn + move_to_tree + wait_turns + harvest_and_drop + move_back - 1
+        return last_drop_turn < 300
+
     def _decide(self, troll, trees, my_inv, all_trolls, opp_trolls, shack_dist, turn, targeted):
         tid = troll['id']
         tx, ty = troll['x'], troll['y']
@@ -223,6 +242,9 @@ class Bot:
         if free > 0 and harvest_pow > 0:
             for tree in trees:
                 if tree['x'] == tx and tree['y'] == ty and tree['fruits'] > 0:
+                    d_s = self.dist(shack_dist, tx, ty)
+                    if not self._can_bank_fruit_before_horizon(0, d_s, speed, turn):
+                        return self._move_to_shack(tid, tx, ty, troll_dist)
                     return f"HARVEST {tid}"
 
         # --- PRIORITY 3: PLANT if on good spot and carrying fruit ---
@@ -274,6 +296,8 @@ class Bot:
             return f"MOVE {tid} {bx} {by}"
 
         # --- PRIORITY 8: Fallback ---
+        if not self.low_league and turn >= 290:
+            return self._move_to_shack(tid, tx, ty, troll_dist)
         return f"MOVE {tid} {self.width // 2} {self.height // 2}"
 
     def _move_to_shack(self, tid, tx, ty, troll_dist):
@@ -429,7 +453,6 @@ class Bot:
 
         best_score = -9999
         best_pos = None
-        opp_positions = [(t['x'], t['y']) for t in all_trolls if t['player'] == 1]
 
         for tree in trees:
             tree_x, tree_y = tree['x'], tree['y']
@@ -461,6 +484,12 @@ class Bot:
 
             # Round-trip efficiency
             eff_speed = max(speed, 1)
+            wait_turns = 0
+            if harvestable == 0 and future_fruits > 0 and tree['cd'] > 0:
+                wait_turns = max(0, tree['cd'] - self._move_turns(d_t, eff_speed))
+            if not self._can_bank_fruit_before_horizon(d_t, d_s, eff_speed, turn, wait_turns):
+                continue
+
             travel_to = max(1, d_t / eff_speed)
             travel_back = max(1, d_s / eff_speed)
             total_time = travel_to + travel_back + 2
@@ -496,24 +525,6 @@ class Bot:
             my_dist = d_t
             if my_dist < opp_dist:
                 score += 0.2
-
-            # Bronze pressure: modestly contest fruit the opponent is near,
-            # or trees that sit on their side of the map.
-            if not self.low_league:
-                pressure_bonus = 0.0
-                if tree['fruits'] > 0 and opp_positions:
-                    nearest_opp = min(abs(tree_x - ox) + abs(tree_y - oy) for ox, oy in opp_positions)
-                    if nearest_opp <= 2:
-                        pressure_bonus = 0.18
-                    elif nearest_opp <= 4:
-                        pressure_bonus = 0.08
-
-                if opp_dist + 1 < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.12)
-                elif opp_dist < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.06)
-
-                score += pressure_bonus
 
             # Water bonus
             if self.near_water[tree_x][tree_y]:

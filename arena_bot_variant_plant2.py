@@ -83,7 +83,7 @@ class Bot:
                 if self.walkable[x][y] and (good_low_league_spot or good_full_league_spot):
                     self.plant_spots.append((x, y))
         self.planted_cells = set()
-        self.max_plants = 4 if self.low_league else 3
+        self.max_plants = 4 if self.low_league else 2
         self.planters = {}
 
     def bfs(self, sx, sy, is_shack=False, shack_nbrs=None):
@@ -429,7 +429,6 @@ class Bot:
 
         best_score = -9999
         best_pos = None
-        opp_positions = [(t['x'], t['y']) for t in all_trolls if t['player'] == 1]
 
         for tree in trees:
             tree_x, tree_y = tree['x'], tree['y']
@@ -496,24 +495,6 @@ class Bot:
             my_dist = d_t
             if my_dist < opp_dist:
                 score += 0.2
-
-            # Bronze pressure: modestly contest fruit the opponent is near,
-            # or trees that sit on their side of the map.
-            if not self.low_league:
-                pressure_bonus = 0.0
-                if tree['fruits'] > 0 and opp_positions:
-                    nearest_opp = min(abs(tree_x - ox) + abs(tree_y - oy) for ox, oy in opp_positions)
-                    if nearest_opp <= 2:
-                        pressure_bonus = 0.18
-                    elif nearest_opp <= 4:
-                        pressure_bonus = 0.08
-
-                if opp_dist + 1 < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.12)
-                elif opp_dist < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.06)
-
-                score += pressure_bonus
 
             # Water bonus
             if self.near_water[tree_x][tree_y]:

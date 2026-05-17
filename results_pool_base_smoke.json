@@ -1,0 +1,180 @@
+{
+  "bot": "arena_bot_base.py",
+  "candidate_cmd": "python3 /work/arena_bot_base.py",
+  "opponents": [
+    "config",
+    "backup"
+  ],
+  "seeds": 4,
+  "start": 1,
+  "league": 3,
+  "results": [
+    {
+      "opponent": "config",
+      "seed": 1,
+      "order": "candidate_p0",
+      "candidate": 152,
+      "opponent_score": 91,
+      "diff": 61,
+      "time": 16.203693866729736
+    },
+    {
+      "opponent": "config",
+      "seed": 1,
+      "order": "candidate_p1",
+      "candidate": 112,
+      "opponent_score": 87,
+      "diff": 25,
+      "time": 11.845378875732422
+    },
+    {
+      "opponent": "config",
+      "seed": 2,
+      "order": "candidate_p0",
+      "candidate": 99,
+      "opponent_score": 66,
+      "diff": 33,
+      "time": 13.895224809646606
+    },
+    {
+      "opponent": "config",
+      "seed": 2,
+      "order": "candidate_p1",
+      "candidate": 99,
+      "opponent_score": 65,
+      "diff": 34,
+      "time": 14.922757863998413
+    },
+    {
+      "opponent": "config",
+      "seed": 3,
+      "order": "candidate_p0",
+      "candidate": 158,
+      "opponent_score": 73,
+      "diff": 85,
+      "time": 18.90856695175171
+    },
+    {
+      "opponent": "config",
+      "seed": 3,
+      "order": "candidate_p1",
+      "candidate": 158,
+      "opponent_score": 73,
+      "diff": 85,
+      "time": 16.82518720626831
+    },
+    {
+      "opponent": "config",
+      "seed": 4,
+      "order": "candidate_p0",
+      "candidate": 112,
+      "opponent_score": 119,
+      "diff": -7,
+      "time": 15.133952140808105
+    },
+    {
+      "opponent": "config",
+      "seed": 4,
+      "order": "candidate_p1",
+      "candidate": 132,
+      "opponent_score": 181,
+      "diff": -49,
+      "time": 14.226928949356079
+    },
+    {
+      "opponent": "backup",
+      "seed": 1,
+      "order": "candidate_p0",
+      "candidate": 152,
+      "opponent_score": 87,
+      "diff": 65,
+      "time": 12.582914352416992
+    },
+    {
+      "opponent": "backup",
+      "seed": 1,
+      "order": "candidate_p1",
+      "candidate": 112,
+      "opponent_score": 87,
+      "diff": 25,
+      "time": 10.905795574188232
+    },
+    {
+      "opponent": "backup",
+      "seed": 2,
+      "order": "candidate_p0",
+      "candidate": 99,
+      "opponent_score": 66,
+      "diff": 33,
+      "time": 12.776672601699829
+    },
+    {
+      "opponent": "backup",
+      "seed": 2,
+      "order": "candidate_p1",
+      "candidate": 99,
+      "opponent_score": 64,
+      "diff": 35,
+      "time": 14.629717350006104
+    },
+    {
+      "opponent": "backup",
+      "seed": 3,
+      "order": "candidate_p0",
+      "candidate": 158,
+      "opponent_score": 73,
+      "diff": 85,
+      "time": 12.493584394454956
+    },
+    {
+      "opponent": "backup",
+      "seed": 3,
+      "order": "candidate_p1",
+      "candidate": 158,
+      "opponent_score": 73,
+      "diff": 85,
+      "time": 14.625692367553711
+    },
+    {
+      "opponent": "backup",
+      "seed": 4,
+      "order": "candidate_p0",
+      "candidate": 114,
+      "opponent_score": 120,
+      "diff": -6,
+      "time": 15.04651141166687
+    },
+    {
+      "opponent": "backup",
+      "seed": 4,
+      "order": "candidate_p1",
+      "candidate": 133,
+      "opponent_score": 178,
+      "diff": -45,
+      "time": 12.796981811523438
+    }
+  ],
+  "summary": {
+    "config": {
+      "wins": 6,
+      "losses": 2,
+      "ties": 0,
+      "crashes": 0,
+      "avg_diff": 33.375
+    },
+    "backup": {
+      "wins": 6,
+      "losses": 2,
+      "ties": 0,
+      "crashes": 0,
+      "avg_diff": 34.625
+    },
+    "total": {
+      "wins": 12,
+      "losses": 4,
+      "ties": 0,
+      "crashes": 0,
+      "avg_diff": 34.0
+    }
+  }
+}

@@ -2,12 +2,12 @@
 
 ## Current State
 
-`arena_bot.py` is the submission bot. It was retuned for Wood 1 and promoted the account to **Bronze**. It now keeps two strategy modes in one file:
+`arena_bot.py` is the submission bot. It was retuned for Wood 1 and promoted the account to **Bronze**, then the small Bronze "pressure" target-scoring variant promoted it to **Silver**. Latest known ladder status: **Silver 512/630** on May 17, 2026. It now keeps two strategy modes in one file:
 
 | Mode | Detection | Rules Shape | Current Plan |
 |------|-----------|-------------|--------------|
 | Wood 1 / league 2 | no iron cells on map | 100 turns, fruit-only scoring, no water/iron/wood | close shack orchard, banana-first planting, no chop training |
-| Bronze / league 3 | iron cells exist | 300 turns, water boosts, iron, chop/mine, wood scores 4 | water-adjacent orchard, normal harvesting, late chop/mine logic |
+| Bronze/Silver / league 3+ | iron cells exist | 300 turns, water boosts, iron, chop/mine, wood scores 4 | water-adjacent orchard, normal harvesting, tiny opponent-pressure bonus, late chop/mine logic |
 
 Important referee correction: each troll can only perform one action per turn. Do not output same-troll `MOVE;HARVEST`, `MOVE;DROP`, etc. The old combo strategy was based on a bad reading of turn order.
 
@@ -23,7 +23,7 @@ Per troll, `arena_bot.py` currently uses:
 5. OPPORTUNISTIC PLANT  on valid plant spot carrying a seed -> PLANT
 6. CHOP                 Bronze only, on tree, late/value-based
 7. MINE                 Bronze only, adjacent iron and iron is low
-8. FIND TARGET          score trees/iron -> MOVE
+8. FIND TARGET          score trees/iron/opponent pressure -> MOVE
 9. FALLBACK             MOVE toward map center
 ```
 
@@ -59,11 +59,11 @@ Variant notes from the Wood 1 tuning pass:
 | 6 close planted trees | 29W-1L | +17.7 | Overplants |
 | 7 close planted trees | 30W-0L | +18.3 | Wins sample but lower average |
 
-## Bronze Strategy
+## Bronze/Silver Strategy
 
-Bronze adds water, iron, chopping, mining, wood score, and 300 turns. The current bot has Bronze support, but it has not yet been retuned after promotion.
+Bronze adds water, iron, chopping, mining, wood score, and 300 turns. The current Silver bot is still mostly the Bronze bot, with one successful ladder-facing addition: a small target bonus for opponent pressure.
 
-Bronze behavior today:
+Bronze/Silver behavior today:
 
 - Plant up to 3 water-adjacent trees near the shack (`shack_dist <= 5`).
 - Seed priority is `APPLE`, `PLUM`, `LEMON`, then `BANANA`.
@@ -72,16 +72,21 @@ Bronze behavior today:
 - Training includes chopPower configs after early game, subject to iron affordability.
 - Mine iron when iron inventory is below `max(3, troll_count)`.
 - Chop late: starts after turn 180 on unproductive trees, with an aggressive value fallback after turn 220.
+- Target scoring adds a small pressure bonus when a fruiting tree is near an opponent troll or lies on opponent-favored territory.
 
-Latest Bronze benchmark before the Wood 1-specific cleanup:
+Important ladder history:
+
+- `arena_bot_base.py` is the preserved Bronze-promotion base.
+- `arena_bot_variant_pressure.py` was copied to `arena_bot.py` and promoted to Silver, rank 512/630.
+- `arena_bot_variant_mine6.py` had positive paired mirror score but dropped ladder rank to Bronze 339/529. Treat mirror self-play as only one signal.
+
+Useful local benchmark for the Silver pressure variant:
 
 ```bash
-python3 self_play.py --bot1 "python3 /work/arena_bot.py" --bot2 "python3 /work/bot.py" --seeds 50 --start 1 --league 3
+python3 eval_pool.py arena_bot.py --opponents config config_v001 config_v002 backup --seeds 12 --start 1 --league 3 --jobs 10
 ```
 
-Result from the earlier pass: **35W-12L-3T**, average diff **+28.1**.
-
-Re-run this before making Bronze decisions, because the current file has since received target deconfliction and low-league branching changes.
+Pressure result: **88W-8L**, average diff **+47.72**. Base on the same pool: **84W-11L**, average diff **+46.31**, with one crash. In mirror paired self-play, pressure was slightly negative (`-1.08` avg paired diff over 12 seeds), so the pool result and ladder promotion mattered more.
 
 ## Target Scoring
 
@@ -96,6 +101,10 @@ Bonuses:
 - `+2.0` if the tree is reachable this turn.
 - `+0.2` if closer to our current path than the opponent shack by Manhattan proxy.
 - `+0.1` if the tree is near water.
+- Bronze/Silver pressure bonus:
+  - up to `+0.18` for a fruiting tree with an opponent troll within Manhattan distance 2.
+  - `+0.08` for a fruiting tree with an opponent troll within distance 4.
+  - up to `+0.12` for trees clearly closer to the opponent shack than ours.
 
 Penalties / filters:
 
@@ -103,7 +112,7 @@ Penalties / filters:
 - Wood 1: skip trees already targeted by a friendly troll.
 - Wood 1: skip fruit trees already occupied by an empty friendly troll.
 
-Iron cells are scored as `3.0 / (distance / speed)` when a chop-capable troll has capacity and iron inventory is low.
+Iron cells are currently scored as `3.0 / (distance / speed)` when a chop-capable troll has capacity and iron inventory is low. Caveat: iron cells themselves are not walkable; `arena_bot_variant_mine_spots.py` tested targeting adjacent grass cells and was nearly neutral locally. Revisit this only with a stronger mining/training plan.
 
 ## Training
 
@@ -125,33 +134,50 @@ Bronze:
 | Mid | 21-80 | Balanced workers, start adding chopPower |
 | Late | 81+ | Include chopPower for wood and iron access |
 
-## Next Bronze Work
+## Variant Lessons From Bronze To Silver
 
-1. Re-run league 3 baseline after the latest docs/code state:
+Preserve these lessons so we do not rediscover them tomorrow:
 
-```bash
-python3 self_play.py --bot1 "python3 /work/arena_bot.py" --bot2 "python3 /work/bot.py" --seeds 50 --start 1 --league 3
-```
+- **Pressure worked on ladder**: small opponent-aware target bonuses promoted to Silver.
+- **Mirror self-play can mislead**: `mine6` looked positive locally but dropped ladder rank; pressure looked slightly negative in mirror but climbed.
+- **Bronze planting is essential**: disabling Bronze planting was catastrophic (`-80.67` avg paired diff over 12 seeds).
+- **Plant cap changes were not enough**: 2 and 4 plant caps were slightly worse than the 3-tree anchor.
+- **Naive stacking is bad**: forcing/encouraging a second troll to the same tree lost heavily despite harvest duplication existing in the referee.
+- **Resource-balance chasing was bad**: over-weighting scarce training fruit caused long trips and score collapses.
+- **Fruit-only Bronze was close but negative**: removing chop training/wood behavior was not a clear improvement.
+- **Endgame cash-in gating was negative**: simple "skip if cannot bank by turn 300" hurt more than it helped.
 
-2. Build a few local opponents so we are not only beating our old baseline:
+## Next Silver Work
 
-- Greedy no-plant harvester.
-- Fast-train swarm with minimal planting.
-- Heavy planting bot.
-- Wood-focused chop bot for Bronze.
+1. Build stronger local opponent pool entries:
+   - fast-train swarm
+   - orchard-heavy bot
+   - pressure/disruptor bot
+   - wood-focused endgame bot
 
-3. Improve Bronze specifically:
+2. Improve opponent modeling:
+   - predict which trees opponent trolls can reach this turn.
+   - contest only when we can harvest/drop efficiently.
+   - avoid the failed crowding behavior from `stack2`.
 
-- Targeted chopping: send chop-capable trolls to high-value trees before they happen to stand on them.
-- Smarter mining: mine iron based on next desired `TRAIN`, not a static threshold.
-- Opponent contesting: deliberately share/contest high-yield trees to exploit duplication.
-- Bronze plant cap/type tuning: retest 2/3/4 water-adjacent plants and seed order.
+3. Revisit chopping/mining with intent:
+   - route to adjacent mining spots, not iron cells.
+   - mine only when it unlocks a planned training config.
+   - chop only when wood can be returned and the lost fruit production is acceptable.
+
+4. Improve evaluation:
+   - use both `paired_self_play.py` and `eval_pool.py`.
+   - treat ladder rank as the final arbiter when local signals conflict.
 
 ## Files
 
 | File | Purpose |
 |------|---------|
 | `arena_bot.py` | Submission bot; current best |
+| `arena_bot_base.py` | Preserved Bronze-promotion base strategy |
+| `arena_bot_silver_base.py` | Preserved Silver-promotion pressure strategy |
 | `bot.py` | Older configurable baseline; useful as a sparring partner, not proof of ladder strength |
 | `self_play.py` | Batch runner |
+| `paired_self_play.py` | Fair paired A/B runner with parallel jobs |
+| `eval_pool.py` | Broader local opponent-pool evaluator |
 | `arena_bot_backup.py` | Old pre-rewrite arena bot |

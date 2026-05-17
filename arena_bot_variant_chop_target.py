@@ -413,6 +413,7 @@ class Bot:
         tx, ty = troll['x'], troll['y']
         free = troll['free_carry']
         harvest_pow = troll['harvest']
+        chop_pow = troll['chop']
         speed = troll['speed']
         sx, sy = self.my_shack
 
@@ -429,7 +430,6 @@ class Bot:
 
         best_score = -9999
         best_pos = None
-        opp_positions = [(t['x'], t['y']) for t in all_trolls if t['player'] == 1]
 
         for tree in trees:
             tree_x, tree_y = tree['x'], tree['y']
@@ -456,7 +456,24 @@ class Bot:
                     future_fruits = 0.2
 
             total_value = harvestable + future_fruits
-            if total_value <= 0 and tree['fruits'] <= 0:
+
+            chop_score = -9999
+            if (not self.low_league and chop_pow > 0 and free > 0 and turn >= 150
+                    and tree['health'] > 0):
+                wood_gain = min(tree['size'], free)
+                if wood_gain > 0:
+                    chops_needed = max(1, (tree['health'] + chop_pow - 1) // chop_pow)
+                    fruit_penalty = tree['fruits'] * (0.35 if turn < 230 else 0.15)
+                    wood_value = wood_gain * 4.0 - fruit_penalty
+                    if tree['fruits'] > 0 and turn < 210:
+                        wood_value -= 1.5
+                    if wood_value > 0:
+                        eff_speed = max(speed, 1)
+                        travel_to = max(1, d_t / eff_speed)
+                        travel_back = max(1, d_s / eff_speed)
+                        chop_score = wood_value / max(travel_to + chops_needed + travel_back, 1)
+
+            if total_value <= 0 and tree['fruits'] <= 0 and chop_score <= best_score:
                 continue
 
             # Round-trip efficiency
@@ -497,27 +514,12 @@ class Bot:
             if my_dist < opp_dist:
                 score += 0.2
 
-            # Bronze pressure: modestly contest fruit the opponent is near,
-            # or trees that sit on their side of the map.
-            if not self.low_league:
-                pressure_bonus = 0.0
-                if tree['fruits'] > 0 and opp_positions:
-                    nearest_opp = min(abs(tree_x - ox) + abs(tree_y - oy) for ox, oy in opp_positions)
-                    if nearest_opp <= 2:
-                        pressure_bonus = 0.18
-                    elif nearest_opp <= 4:
-                        pressure_bonus = 0.08
-
-                if opp_dist + 1 < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.12)
-                elif opp_dist < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.06)
-
-                score += pressure_bonus
-
             # Water bonus
             if self.near_water[tree_x][tree_y]:
                 score += 0.1
+
+            if chop_score > score:
+                score = chop_score
 
             if score > best_score:
                 best_score = score

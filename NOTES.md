@@ -85,7 +85,7 @@ Important: the referee rejects using the same troll twice in one turn. `MOVE 0 5
 ### League Notes
 
 - **Wood 1 / league 2**: 100 turns, height 8, no water/iron/wood, fruit-only score. Inventory/carry fields for iron and wood are reserved zeros. Training effectively costs only plum/lemon/apple because chopPower is unavailable.
-- **Bronze / league 3**: 300 turns, water, iron, chopping, mining, and wood scoring are active.
+- **Bronze/Silver / league 3+**: 300 turns, water, iron, chopping, mining, and wood scoring are active.
 
 ## Key Game Constants (from source)
 - PLANT_COOLDOWN = [8, 8, 9, 6] (PLUM, LEMON, APPLE, BANANA)
@@ -96,3 +96,19 @@ Important: the referee rejects using the same troll twice in one turn. `MOVE 0 5
 - WOOD_POINTS = 4, iron scores 0
 - Game is 300 turns, stalls end after 10 turns with no trees
 - Time limit: 1000ms first turn, 50ms per turn (3 strikes allowed)
+
+## Project Ladder Notes
+
+- The Wood 1 rewrite promoted the account to Bronze.
+- The Bronze "pressure" variant promoted the account to Silver on May 17, 2026; latest known rank: **Silver 512/630**.
+- The pressure variant is small: in Bronze/Silver target scoring, it adds modest bonuses for fruiting trees near opponent trolls and trees closer to the opponent shack. It did not change Wood 1 logic.
+- `arena_bot_base.py` preserves the Bronze-promotion base. `arena_bot_silver_base.py` preserves the Silver-promotion pressure bot. Current `arena_bot.py` is the Silver pressure bot.
+- `arena_bot_variant_mine6.py` is a cautionary result: local paired score looked positive, but ladder rank fell to Bronze 339/529. Do not trust mirror self-play alone.
+
+## Iteration Lessons
+
+- Use `paired_self_play.py` to compare variants fairly across both player orders.
+- Use `eval_pool.py` before ladder probes; the Silver pressure variant looked better there even though mirror self-play was slightly negative.
+- Removing Bronze planting was catastrophic locally; keep water-adjacent orchard behavior as an anchor.
+- Naive stacking/contesting was bad despite harvest duplication existing in the referee.
+- Iron cells are not walkable; mining requires standing on adjacent grass. The current bot can still improve here, but the tested `mine_spots` variant was locally neutral.

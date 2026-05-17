@@ -429,7 +429,7 @@ class Bot:
 
         best_score = -9999
         best_pos = None
-        opp_positions = [(t['x'], t['y']) for t in all_trolls if t['player'] == 1]
+        n_my = len([t for t in all_trolls if t['player'] == 0])
 
         for tree in trees:
             tree_x, tree_y = tree['x'], tree['y']
@@ -467,6 +467,14 @@ class Bot:
 
             score = total_value / max(total_time, 1)
 
+            if not self.low_league and tree['ti'] <= APPLE:
+                target_stock = n_my + (4 if turn < 80 else 2)
+                shortage = max(0, target_stock - my_inv[tree['ti']])
+                if shortage > 0:
+                    score += min(1.4, 0.28 * shortage)
+            elif not self.low_league and tree['ti'] == BANANA and turn < 120:
+                score *= 0.82
+
             # Reach bonus (same as baseline)
             if d_t <= speed:
                 score += 2.0
@@ -497,24 +505,6 @@ class Bot:
             if my_dist < opp_dist:
                 score += 0.2
 
-            # Bronze pressure: modestly contest fruit the opponent is near,
-            # or trees that sit on their side of the map.
-            if not self.low_league:
-                pressure_bonus = 0.0
-                if tree['fruits'] > 0 and opp_positions:
-                    nearest_opp = min(abs(tree_x - ox) + abs(tree_y - oy) for ox, oy in opp_positions)
-                    if nearest_opp <= 2:
-                        pressure_bonus = 0.18
-                    elif nearest_opp <= 4:
-                        pressure_bonus = 0.08
-
-                if opp_dist + 1 < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.12)
-                elif opp_dist < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.06)
-
-                score += pressure_bonus
-
             # Water bonus
             if self.near_water[tree_x][tree_y]:
                 score += 0.1
@@ -524,7 +514,6 @@ class Bot:
                 best_pos = (tree_x, tree_y)
 
         # Consider iron if needed
-        n_my = len([t for t in all_trolls if t['player'] == 0])
         if troll['chop'] > 0 and free > 0 and my_inv[IRON] < max(3, n_my):
             for ix, iy in self.iron_cells:
                 d = d_to(ix, iy)

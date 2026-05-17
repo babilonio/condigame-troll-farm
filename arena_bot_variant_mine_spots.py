@@ -31,6 +31,7 @@ class Bot:
         self.opp_shack = None
         self.walkable = [[False] * self.height for _ in range(self.width)]
         self.iron_cells = set()
+        self.iron_spots = []
         self.near_water = [[False] * self.height for _ in range(self.width)]
         self._bfs_cache = {}
         self.tree_cells = set()
@@ -49,6 +50,15 @@ class Bot:
                     self.iron_cells.add((x, y))
 
         self.low_league = len(self.iron_cells) == 0
+
+        seen_iron_spots = set()
+        for ix, iy in self.iron_cells:
+            for d in range(4):
+                nx, ny = ix + DX[d], iy + DY[d]
+                if (0 <= nx < self.width and 0 <= ny < self.height
+                        and self.walkable[nx][ny] and (nx, ny) not in seen_iron_spots):
+                    seen_iron_spots.add((nx, ny))
+                    self.iron_spots.append((nx, ny))
 
         for x in range(self.width):
             for y in range(self.height):
@@ -429,7 +439,6 @@ class Bot:
 
         best_score = -9999
         best_pos = None
-        opp_positions = [(t['x'], t['y']) for t in all_trolls if t['player'] == 1]
 
         for tree in trees:
             tree_x, tree_y = tree['x'], tree['y']
@@ -497,24 +506,6 @@ class Bot:
             if my_dist < opp_dist:
                 score += 0.2
 
-            # Bronze pressure: modestly contest fruit the opponent is near,
-            # or trees that sit on their side of the map.
-            if not self.low_league:
-                pressure_bonus = 0.0
-                if tree['fruits'] > 0 and opp_positions:
-                    nearest_opp = min(abs(tree_x - ox) + abs(tree_y - oy) for ox, oy in opp_positions)
-                    if nearest_opp <= 2:
-                        pressure_bonus = 0.18
-                    elif nearest_opp <= 4:
-                        pressure_bonus = 0.08
-
-                if opp_dist + 1 < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.12)
-                elif opp_dist < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.06)
-
-                score += pressure_bonus
-
             # Water bonus
             if self.near_water[tree_x][tree_y]:
                 score += 0.1
@@ -526,10 +517,11 @@ class Bot:
         # Consider iron if needed
         n_my = len([t for t in all_trolls if t['player'] == 0])
         if troll['chop'] > 0 and free > 0 and my_inv[IRON] < max(3, n_my):
-            for ix, iy in self.iron_cells:
+            for ix, iy in self.iron_spots:
                 d = d_to(ix, iy)
                 if d < 9999:
-                    iron_score = 3.0 / max(d / max(speed, 1), 1)
+                    shack_d = self.dist(shack_dist, ix, iy)
+                    iron_score = 3.0 / max((d + shack_d) / max(speed, 1), 1)
                     if iron_score > best_score:
                         best_score = iron_score
                         best_pos = (ix, iy)

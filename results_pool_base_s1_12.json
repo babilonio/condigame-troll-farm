@@ -1,0 +1,913 @@
+{
+  "bot": "arena_bot_base.py",
+  "candidate_cmd": "python3 /work/arena_bot_base.py",
+  "opponents": [
+    "config",
+    "config_v001",
+    "config_v002",
+    "backup"
+  ],
+  "seeds": 12,
+  "start": 1,
+  "league": 3,
+  "results": [
+    {
+      "opponent": "config",
+      "seed": 1,
+      "order": "candidate_p0",
+      "candidate": 152,
+      "opponent_score": 91,
+      "diff": 61,
+      "time": 18.982332944869995
+    },
+    {
+      "opponent": "config",
+      "seed": 1,
+      "order": "candidate_p1",
+      "candidate": 112,
+      "opponent_score": 87,
+      "diff": 25,
+      "time": 21.5461528301239
+    },
+    {
+      "opponent": "config",
+      "seed": 2,
+      "order": "candidate_p0",
+      "candidate": 99,
+      "opponent_score": 66,
+      "diff": 33,
+      "time": 18.34140658378601
+    },
+    {
+      "opponent": "config",
+      "seed": 2,
+      "order": "candidate_p1",
+      "candidate": 99,
+      "opponent_score": 65,
+      "diff": 34,
+      "time": 15.697451114654541
+    },
+    {
+      "opponent": "config",
+      "seed": 3,
+      "order": "candidate_p0",
+      "candidate": 158,
+      "opponent_score": 73,
+      "diff": 85,
+      "time": 18.985358476638794
+    },
+    {
+      "opponent": "config",
+      "seed": 3,
+      "order": "candidate_p1",
+      "candidate": 158,
+      "opponent_score": 73,
+      "diff": 85,
+      "time": 16.390679359436035
+    },
+    {
+      "opponent": "config",
+      "seed": 4,
+      "order": "candidate_p0",
+      "candidate": 112,
+      "opponent_score": 119,
+      "diff": -7,
+      "time": 19.333248376846313
+    },
+    {
+      "opponent": "config",
+      "seed": 4,
+      "order": "candidate_p1",
+      "candidate": 132,
+      "opponent_score": 181,
+      "diff": -49,
+      "time": 20.968507051467896
+    },
+    {
+      "opponent": "config",
+      "seed": 5,
+      "order": "candidate_p0",
+      "candidate": 161,
+      "opponent_score": 119,
+      "diff": 42,
+      "time": 15.902644395828247
+    },
+    {
+      "opponent": "config",
+      "seed": 5,
+      "order": "candidate_p1",
+      "candidate": 162,
+      "opponent_score": 116,
+      "diff": 46,
+      "time": 18.56226110458374
+    },
+    {
+      "opponent": "config",
+      "seed": 6,
+      "order": "candidate_p0",
+      "candidate": 182,
+      "opponent_score": 118,
+      "diff": 64,
+      "time": 15.34510350227356
+    },
+    {
+      "opponent": "config",
+      "seed": 6,
+      "order": "candidate_p1",
+      "candidate": 184,
+      "opponent_score": 116,
+      "diff": 68,
+      "time": 15.038738250732422
+    },
+    {
+      "opponent": "config",
+      "seed": 7,
+      "order": "candidate_p0",
+      "candidate": 156,
+      "opponent_score": 116,
+      "diff": 40,
+      "time": 19.52864718437195
+    },
+    {
+      "opponent": "config",
+      "seed": 7,
+      "order": "candidate_p1",
+      "candidate": 156,
+      "opponent_score": 116,
+      "diff": 40,
+      "time": 17.821610689163208
+    },
+    {
+      "opponent": "config",
+      "seed": 8,
+      "order": "candidate_p0",
+      "candidate": 153,
+      "opponent_score": 102,
+      "diff": 51,
+      "time": 18.575230598449707
+    },
+    {
+      "opponent": "config",
+      "seed": 8,
+      "order": "candidate_p1",
+      "candidate": 153,
+      "opponent_score": 102,
+      "diff": 51,
+      "time": 15.7277672290802
+    },
+    {
+      "opponent": "config",
+      "seed": 9,
+      "order": "candidate_p0",
+      "candidate": 143,
+      "opponent_score": 60,
+      "diff": 83,
+      "time": 16.74997067451477
+    },
+    {
+      "opponent": "config",
+      "seed": 9,
+      "order": "candidate_p1",
+      "candidate": 155,
+      "opponent_score": 60,
+      "diff": 95,
+      "time": 20.802673816680908
+    },
+    {
+      "opponent": "config",
+      "seed": 10,
+      "order": "candidate_p0",
+      "crash": true
+    },
+    {
+      "opponent": "config",
+      "seed": 10,
+      "order": "candidate_p1",
+      "candidate": 159,
+      "opponent_score": 94,
+      "diff": 65,
+      "time": 13.291579723358154
+    },
+    {
+      "opponent": "config",
+      "seed": 11,
+      "order": "candidate_p0",
+      "candidate": 156,
+      "opponent_score": 152,
+      "diff": 4,
+      "time": 20.25610613822937
+    },
+    {
+      "opponent": "config",
+      "seed": 11,
+      "order": "candidate_p1",
+      "candidate": 156,
+      "opponent_score": 155,
+      "diff": 1,
+      "time": 19.314995527267456
+    },
+    {
+      "opponent": "config",
+      "seed": 12,
+      "order": "candidate_p0",
+      "candidate": 226,
+      "opponent_score": 165,
+      "diff": 61,
+      "time": 14.581305980682373
+    },
+    {
+      "opponent": "config",
+      "seed": 12,
+      "order": "candidate_p1",
+      "candidate": 156,
+      "opponent_score": 165,
+      "diff": -9,
+      "time": 21.670726537704468
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 1,
+      "order": "candidate_p0",
+      "candidate": 152,
+      "opponent_score": 91,
+      "diff": 61,
+      "time": 21.811870336532593
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 1,
+      "order": "candidate_p1",
+      "candidate": 112,
+      "opponent_score": 87,
+      "diff": 25,
+      "time": 16.356146812438965
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 2,
+      "order": "candidate_p0",
+      "candidate": 99,
+      "opponent_score": 66,
+      "diff": 33,
+      "time": 18.10448431968689
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 2,
+      "order": "candidate_p1",
+      "candidate": 99,
+      "opponent_score": 65,
+      "diff": 34,
+      "time": 16.537994146347046
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 3,
+      "order": "candidate_p0",
+      "candidate": 158,
+      "opponent_score": 73,
+      "diff": 85,
+      "time": 19.57291269302368
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 3,
+      "order": "candidate_p1",
+      "candidate": 158,
+      "opponent_score": 73,
+      "diff": 85,
+      "time": 17.917442321777344
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 4,
+      "order": "candidate_p0",
+      "candidate": 112,
+      "opponent_score": 119,
+      "diff": -7,
+      "time": 16.592170238494873
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 4,
+      "order": "candidate_p1",
+      "candidate": 132,
+      "opponent_score": 181,
+      "diff": -49,
+      "time": 23.709802389144897
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 5,
+      "order": "candidate_p0",
+      "candidate": 161,
+      "opponent_score": 119,
+      "diff": 42,
+      "time": 16.260133981704712
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 5,
+      "order": "candidate_p1",
+      "candidate": 162,
+      "opponent_score": 116,
+      "diff": 46,
+      "time": 20.61122989654541
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 6,
+      "order": "candidate_p0",
+      "candidate": 182,
+      "opponent_score": 118,
+      "diff": 64,
+      "time": 19.49589729309082
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 6,
+      "order": "candidate_p1",
+      "candidate": 184,
+      "opponent_score": 116,
+      "diff": 68,
+      "time": 18.176508903503418
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 7,
+      "order": "candidate_p0",
+      "candidate": 156,
+      "opponent_score": 116,
+      "diff": 40,
+      "time": 19.70969271659851
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 7,
+      "order": "candidate_p1",
+      "candidate": 156,
+      "opponent_score": 116,
+      "diff": 40,
+      "time": 16.404452562332153
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 8,
+      "order": "candidate_p0",
+      "candidate": 153,
+      "opponent_score": 102,
+      "diff": 51,
+      "time": 15.420706987380981
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 8,
+      "order": "candidate_p1",
+      "candidate": 153,
+      "opponent_score": 102,
+      "diff": 51,
+      "time": 12.149165868759155
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 9,
+      "order": "candidate_p0",
+      "candidate": 143,
+      "opponent_score": 60,
+      "diff": 83,
+      "time": 15.535686492919922
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 9,
+      "order": "candidate_p1",
+      "candidate": 155,
+      "opponent_score": 60,
+      "diff": 95,
+      "time": 14.921184062957764
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 10,
+      "order": "candidate_p0",
+      "candidate": 159,
+      "opponent_score": 94,
+      "diff": 65,
+      "time": 16.822718143463135
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 10,
+      "order": "candidate_p1",
+      "candidate": 159,
+      "opponent_score": 94,
+      "diff": 65,
+      "time": 24.842835903167725
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 11,
+      "order": "candidate_p0",
+      "candidate": 156,
+      "opponent_score": 152,
+      "diff": 4,
+      "time": 18.653579473495483
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 11,
+      "order": "candidate_p1",
+      "candidate": 156,
+      "opponent_score": 155,
+      "diff": 1,
+      "time": 21.629361867904663
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 12,
+      "order": "candidate_p0",
+      "candidate": 226,
+      "opponent_score": 165,
+      "diff": 61,
+      "time": 21.05140519142151
+    },
+    {
+      "opponent": "config_v001",
+      "seed": 12,
+      "order": "candidate_p1",
+      "candidate": 156,
+      "opponent_score": 165,
+      "diff": -9,
+      "time": 17.998512268066406
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 1,
+      "order": "candidate_p0",
+      "candidate": 152,
+      "opponent_score": 85,
+      "diff": 67,
+      "time": 19.571468591690063
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 1,
+      "order": "candidate_p1",
+      "candidate": 112,
+      "opponent_score": 88,
+      "diff": 24,
+      "time": 19.0097017288208
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 2,
+      "order": "candidate_p0",
+      "candidate": 99,
+      "opponent_score": 63,
+      "diff": 36,
+      "time": 18.843937158584595
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 2,
+      "order": "candidate_p1",
+      "candidate": 99,
+      "opponent_score": 63,
+      "diff": 36,
+      "time": 20.12967538833618
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 3,
+      "order": "candidate_p0",
+      "candidate": 158,
+      "opponent_score": 73,
+      "diff": 85,
+      "time": 16.755955696105957
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 3,
+      "order": "candidate_p1",
+      "candidate": 158,
+      "opponent_score": 73,
+      "diff": 85,
+      "time": 16.213313817977905
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 4,
+      "order": "candidate_p0",
+      "candidate": 113,
+      "opponent_score": 88,
+      "diff": 25,
+      "time": 15.823155164718628
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 4,
+      "order": "candidate_p1",
+      "candidate": 133,
+      "opponent_score": 90,
+      "diff": 43,
+      "time": 13.699673175811768
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 5,
+      "order": "candidate_p0",
+      "candidate": 161,
+      "opponent_score": 114,
+      "diff": 47,
+      "time": 21.281876802444458
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 5,
+      "order": "candidate_p1",
+      "candidate": 162,
+      "opponent_score": 87,
+      "diff": 75,
+      "time": 21.779841423034668
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 6,
+      "order": "candidate_p0",
+      "candidate": 181,
+      "opponent_score": 104,
+      "diff": 77,
+      "time": 17.240376710891724
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 6,
+      "order": "candidate_p1",
+      "candidate": 184,
+      "opponent_score": 104,
+      "diff": 80,
+      "time": 16.297874212265015
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 7,
+      "order": "candidate_p0",
+      "candidate": 156,
+      "opponent_score": 116,
+      "diff": 40,
+      "time": 20.09300446510315
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 7,
+      "order": "candidate_p1",
+      "candidate": 156,
+      "opponent_score": 116,
+      "diff": 40,
+      "time": 22.369413375854492
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 8,
+      "order": "candidate_p0",
+      "candidate": 153,
+      "opponent_score": 102,
+      "diff": 51,
+      "time": 18.39747667312622
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 8,
+      "order": "candidate_p1",
+      "candidate": 153,
+      "opponent_score": 102,
+      "diff": 51,
+      "time": 18.56753897666931
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 9,
+      "order": "candidate_p0",
+      "candidate": 143,
+      "opponent_score": 57,
+      "diff": 86,
+      "time": 17.504544973373413
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 9,
+      "order": "candidate_p1",
+      "candidate": 155,
+      "opponent_score": 58,
+      "diff": 97,
+      "time": 15.683424711227417
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 10,
+      "order": "candidate_p0",
+      "candidate": 159,
+      "opponent_score": 94,
+      "diff": 65,
+      "time": 19.547619342803955
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 10,
+      "order": "candidate_p1",
+      "candidate": 159,
+      "opponent_score": 94,
+      "diff": 65,
+      "time": 17.685119152069092
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 11,
+      "order": "candidate_p0",
+      "candidate": 156,
+      "opponent_score": 108,
+      "diff": 48,
+      "time": 17.49028253555298
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 11,
+      "order": "candidate_p1",
+      "candidate": 156,
+      "opponent_score": 108,
+      "diff": 48,
+      "time": 18.843111753463745
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 12,
+      "order": "candidate_p0",
+      "candidate": 226,
+      "opponent_score": 165,
+      "diff": 61,
+      "time": 15.479756593704224
+    },
+    {
+      "opponent": "config_v002",
+      "seed": 12,
+      "order": "candidate_p1",
+      "candidate": 156,
+      "opponent_score": 165,
+      "diff": -9,
+      "time": 19.528510808944702
+    },
+    {
+      "opponent": "backup",
+      "seed": 1,
+      "order": "candidate_p0",
+      "candidate": 152,
+      "opponent_score": 87,
+      "diff": 65,
+      "time": 20.81006908416748
+    },
+    {
+      "opponent": "backup",
+      "seed": 1,
+      "order": "candidate_p1",
+      "candidate": 112,
+      "opponent_score": 87,
+      "diff": 25,
+      "time": 18.847625732421875
+    },
+    {
+      "opponent": "backup",
+      "seed": 2,
+      "order": "candidate_p0",
+      "candidate": 99,
+      "opponent_score": 66,
+      "diff": 33,
+      "time": 20.403503894805908
+    },
+    {
+      "opponent": "backup",
+      "seed": 2,
+      "order": "candidate_p1",
+      "candidate": 99,
+      "opponent_score": 64,
+      "diff": 35,
+      "time": 16.638680458068848
+    },
+    {
+      "opponent": "backup",
+      "seed": 3,
+      "order": "candidate_p0",
+      "candidate": 158,
+      "opponent_score": 73,
+      "diff": 85,
+      "time": 20.05018186569214
+    },
+    {
+      "opponent": "backup",
+      "seed": 3,
+      "order": "candidate_p1",
+      "candidate": 158,
+      "opponent_score": 73,
+      "diff": 85,
+      "time": 22.84096670150757
+    },
+    {
+      "opponent": "backup",
+      "seed": 4,
+      "order": "candidate_p0",
+      "candidate": 114,
+      "opponent_score": 120,
+      "diff": -6,
+      "time": 16.801118850708008
+    },
+    {
+      "opponent": "backup",
+      "seed": 4,
+      "order": "candidate_p1",
+      "candidate": 133,
+      "opponent_score": 178,
+      "diff": -45,
+      "time": 15.60800313949585
+    },
+    {
+      "opponent": "backup",
+      "seed": 5,
+      "order": "candidate_p0",
+      "candidate": 161,
+      "opponent_score": 117,
+      "diff": 44,
+      "time": 16.19784164428711
+    },
+    {
+      "opponent": "backup",
+      "seed": 5,
+      "order": "candidate_p1",
+      "candidate": 162,
+      "opponent_score": 110,
+      "diff": 52,
+      "time": 20.418672561645508
+    },
+    {
+      "opponent": "backup",
+      "seed": 6,
+      "order": "candidate_p0",
+      "candidate": 181,
+      "opponent_score": 103,
+      "diff": 78,
+      "time": 16.35868239402771
+    },
+    {
+      "opponent": "backup",
+      "seed": 6,
+      "order": "candidate_p1",
+      "candidate": 184,
+      "opponent_score": 103,
+      "diff": 81,
+      "time": 18.690183401107788
+    },
+    {
+      "opponent": "backup",
+      "seed": 7,
+      "order": "candidate_p0",
+      "candidate": 156,
+      "opponent_score": 116,
+      "diff": 40,
+      "time": 20.924337148666382
+    },
+    {
+      "opponent": "backup",
+      "seed": 7,
+      "order": "candidate_p1",
+      "candidate": 156,
+      "opponent_score": 116,
+      "diff": 40,
+      "time": 19.18854069709778
+    },
+    {
+      "opponent": "backup",
+      "seed": 8,
+      "order": "candidate_p0",
+      "candidate": 153,
+      "opponent_score": 102,
+      "diff": 51,
+      "time": 15.812213659286499
+    },
+    {
+      "opponent": "backup",
+      "seed": 8,
+      "order": "candidate_p1",
+      "candidate": 153,
+      "opponent_score": 102,
+      "diff": 51,
+      "time": 14.6212477684021
+    },
+    {
+      "opponent": "backup",
+      "seed": 9,
+      "order": "candidate_p0",
+      "candidate": 143,
+      "opponent_score": 60,
+      "diff": 83,
+      "time": 20.292723178863525
+    },
+    {
+      "opponent": "backup",
+      "seed": 9,
+      "order": "candidate_p1",
+      "candidate": 155,
+      "opponent_score": 60,
+      "diff": 95,
+      "time": 20.346240758895874
+    },
+    {
+      "opponent": "backup",
+      "seed": 10,
+      "order": "candidate_p0",
+      "candidate": 159,
+      "opponent_score": 94,
+      "diff": 65,
+      "time": 15.395699977874756
+    },
+    {
+      "opponent": "backup",
+      "seed": 10,
+      "order": "candidate_p1",
+      "candidate": 159,
+      "opponent_score": 94,
+      "diff": 65,
+      "time": 13.775803089141846
+    },
+    {
+      "opponent": "backup",
+      "seed": 11,
+      "order": "candidate_p0",
+      "candidate": 156,
+      "opponent_score": 155,
+      "diff": 1,
+      "time": 11.21327257156372
+    },
+    {
+      "opponent": "backup",
+      "seed": 11,
+      "order": "candidate_p1",
+      "candidate": 156,
+      "opponent_score": 158,
+      "diff": -2,
+      "time": 11.071815252304077
+    },
+    {
+      "opponent": "backup",
+      "seed": 12,
+      "order": "candidate_p0",
+      "candidate": 226,
+      "opponent_score": 165,
+      "diff": 61,
+      "time": 9.966026544570923
+    },
+    {
+      "opponent": "backup",
+      "seed": 12,
+      "order": "candidate_p1",
+      "candidate": 156,
+      "opponent_score": 165,
+      "diff": -9,
+      "time": 9.369483709335327
+    }
+  ],
+  "summary": {
+    "config": {
+      "wins": 20,
+      "losses": 3,
+      "ties": 0,
+      "crashes": 1,
+      "avg_diff": 42.130434782608695
+    },
+    "config_v001": {
+      "wins": 21,
+      "losses": 3,
+      "ties": 0,
+      "crashes": 0,
+      "avg_diff": 43.083333333333336
+    },
+    "config_v002": {
+      "wins": 23,
+      "losses": 1,
+      "ties": 0,
+      "crashes": 0,
+      "avg_diff": 55.125
+    },
+    "backup": {
+      "wins": 20,
+      "losses": 4,
+      "ties": 0,
+      "crashes": 0,
+      "avg_diff": 44.708333333333336
+    },
+    "total": {
+      "wins": 84,
+      "losses": 11,
+      "ties": 0,
+      "crashes": 1,
+      "avg_diff": 46.305263157894736
+    }
+  }
+}

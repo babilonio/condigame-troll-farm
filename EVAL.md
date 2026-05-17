@@ -32,7 +32,7 @@ All paths inside the Docker container are relative to `/work/`, which maps to th
 
 League reminders:
 - League 2 / Wood 1: 100 turns, fruit-only scoring, no water/iron/wood.
-- League 3 / Bronze: 300 turns, water, iron, chop/mine, wood scores 4.
+- League 3+ / Bronze/Silver: 300 turns, water, iron, chop/mine, wood scores 4.
 
 ## Batch Testing
 
@@ -124,6 +124,12 @@ python3 self_play.py --bot1 "python3 /work/arena_bot.py" --bot2 "python3 /work/b
 # Arena bot vs baseline, Bronze rules (50 seeds)
 python3 self_play.py --bot1 "python3 /work/arena_bot.py" --bot2 "python3 /work/bot.py" --seeds 50 --league 3
 
+# Paired arena A/B: swaps player order for each seed and runs Docker matches in parallel
+python3 paired_self_play.py arena_bot.py --base arena_bot_base.py --seeds 20 --start 1 --league 3 --jobs 8
+
+# Broader pool eval: better ladder proxy than mirror self-play alone
+python3 eval_pool.py arena_bot.py --opponents config config_v001 config_v002 backup --seeds 12 --start 1 --league 3 --jobs 10
+
 # Config-based A/B testing
 python3 self_play.py v001 v002 --seeds 30
 
@@ -135,11 +141,23 @@ python3 iterate.py promote v002     # promote challenger
 
 See **ITERATE.md** for full documentation.
 
+### Local Eval Lessons
+
+The Silver promotion came from `arena_bot_variant_pressure.py`, which was slightly negative in mirror paired self-play but positive in `eval_pool.py` and successful on the real ladder. Conversely, `arena_bot_variant_mine6.py` had positive mirror score and dropped ladder rank.
+
+Use both tools:
+
+- `paired_self_play.py` for controlled base-vs-variant regression checks.
+- `eval_pool.py` for opponent-diversity signal before a ladder probe.
+- CodinGame ladder rank as the final arbiter when local signals conflict.
+
 ## Performance
 
 Each turn has a 50ms time limit (1000ms for the first turn). The bot's BFS caching means turn 1 is slightly slower (all BFS computations happen), but subsequent turns are fast since distance maps are cached. On a 22×11 grid, BFS is negligible.
 
 Typical timing per turn: <1ms. No timeouts observed across 1000+ games. Zero crashes across 50 seeds tested.
+
+Pool eval can take several minutes even with `--jobs`, because it runs every candidate/opponent/seed in both player orders. This is expected.
 
 ## Common Issues
 

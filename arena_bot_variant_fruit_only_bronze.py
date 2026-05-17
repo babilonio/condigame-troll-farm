@@ -240,7 +240,7 @@ class Bot:
                     return f"PLANT {tid} {ITEM_TO_TREE[fi]}"
 
         # --- PRIORITY 4: CHOP if on tree and worth it ---
-        if chop_pow > 0 and free > 0 and turn > 180:
+        if self.low_league and chop_pow > 0 and free > 0 and turn > 180:
             for tree in trees:
                 if tree['x'] == tx and tree['y'] == ty and tree['health'] > 0:
                     wood_gain = min(tree['size'], free)
@@ -251,7 +251,7 @@ class Bot:
                         return f"CHOP {tid}"
 
         # Original chop logic as fallback (always chop if on tree late game)
-        if chop_pow > 0 and turn > 220:
+        if self.low_league and chop_pow > 0 and turn > 220:
             for tree in trees:
                 if tree['x'] == tx and tree['y'] == ty and tree['health'] > 0:
                     wood_gain = min(tree['size'], free)
@@ -429,7 +429,6 @@ class Bot:
 
         best_score = -9999
         best_pos = None
-        opp_positions = [(t['x'], t['y']) for t in all_trolls if t['player'] == 1]
 
         for tree in trees:
             tree_x, tree_y = tree['x'], tree['y']
@@ -496,24 +495,6 @@ class Bot:
             my_dist = d_t
             if my_dist < opp_dist:
                 score += 0.2
-
-            # Bronze pressure: modestly contest fruit the opponent is near,
-            # or trees that sit on their side of the map.
-            if not self.low_league:
-                pressure_bonus = 0.0
-                if tree['fruits'] > 0 and opp_positions:
-                    nearest_opp = min(abs(tree_x - ox) + abs(tree_y - oy) for ox, oy in opp_positions)
-                    if nearest_opp <= 2:
-                        pressure_bonus = 0.18
-                    elif nearest_opp <= 4:
-                        pressure_bonus = 0.08
-
-                if opp_dist + 1 < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.12)
-                elif opp_dist < d_s:
-                    pressure_bonus = max(pressure_bonus, 0.06)
-
-                score += pressure_bonus
 
             # Water bonus
             if self.near_water[tree_x][tree_y]:
@@ -590,26 +571,21 @@ class Bot:
                 (2, 1, 2, 0),
                 (1, 2, 2, 0),
                 (2, 2, 2, 0),
-                (1, 2, 1, 1),
-                (2, 2, 1, 1),
             ]
         else:
-            # Late: include chopPower
+            # Late: keep Bronze focused on fruit cash flow; the initial troll
+            # still has chopPower for emergency iron mining.
             configs = [
                 (1, 1, 1, 0),
                 (1, 2, 1, 0),
                 (2, 2, 1, 0),
                 (1, 2, 2, 0),
                 (2, 2, 2, 0),
-                (2, 2, 1, 1),
-                (2, 1, 2, 1),
-                (1, 2, 2, 1),
-                (2, 2, 2, 1),
             ]
 
         for config in configs:
             m, c, h, ch = config
-            if self.low_league and ch > 0:
+            if ch > 0:
                 continue
             # Skip chopPower configs when we have no iron
             if ch > 0 and inv[IRON] < n + ch * ch:

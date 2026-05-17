@@ -1,0 +1,323 @@
+{
+  "challenger": "arena_bot_variant_mine6.py",
+  "base": "arena_bot_base.py",
+  "challenger_cmd": "python3 /work/arena_bot_variant_mine6.py",
+  "base_cmd": "python3 /work/arena_bot_base.py",
+  "seeds": 30,
+  "start": 21,
+  "league": 3,
+  "jobs": 8,
+  "summary": {
+    "pair_wins": 0,
+    "pair_losses": 4,
+    "pair_ties": 26,
+    "game_wins": 23,
+    "game_losses": 25,
+    "game_ties": 12,
+    "crashes": 0,
+    "total_challenger": 7354,
+    "total_base": 7364
+  },
+  "results": [
+    {
+      "seed": 21,
+      "challenger_as_p0": 103,
+      "base_as_p1": 105,
+      "base_as_p0": 103,
+      "challenger_as_p1": 105,
+      "challenger_total": 208,
+      "base_total": 208,
+      "diff": 0
+    },
+    {
+      "seed": 22,
+      "challenger_as_p0": 60,
+      "base_as_p1": 58,
+      "base_as_p0": 60,
+      "challenger_as_p1": 58,
+      "challenger_total": 118,
+      "base_total": 118,
+      "diff": 0
+    },
+    {
+      "seed": 23,
+      "challenger_as_p0": 196,
+      "base_as_p1": 91,
+      "base_as_p0": 198,
+      "challenger_as_p1": 89,
+      "challenger_total": 285,
+      "base_total": 289,
+      "diff": -4
+    },
+    {
+      "seed": 24,
+      "challenger_as_p0": 132,
+      "base_as_p1": 131,
+      "base_as_p0": 132,
+      "challenger_as_p1": 131,
+      "challenger_total": 263,
+      "base_total": 263,
+      "diff": 0
+    },
+    {
+      "seed": 25,
+      "challenger_as_p0": 173,
+      "base_as_p1": 177,
+      "base_as_p0": 173,
+      "challenger_as_p1": 177,
+      "challenger_total": 350,
+      "base_total": 350,
+      "diff": 0
+    },
+    {
+      "seed": 26,
+      "challenger_as_p0": 100,
+      "base_as_p1": 114,
+      "base_as_p0": 100,
+      "challenger_as_p1": 114,
+      "challenger_total": 214,
+      "base_total": 214,
+      "diff": 0
+    },
+    {
+      "seed": 27,
+      "challenger_as_p0": 105,
+      "base_as_p1": 104,
+      "base_as_p0": 105,
+      "challenger_as_p1": 104,
+      "challenger_total": 209,
+      "base_total": 209,
+      "diff": 0
+    },
+    {
+      "seed": 28,
+      "challenger_as_p0": 143,
+      "base_as_p1": 143,
+      "base_as_p0": 143,
+      "challenger_as_p1": 143,
+      "challenger_total": 286,
+      "base_total": 286,
+      "diff": 0
+    },
+    {
+      "seed": 29,
+      "challenger_as_p0": 89,
+      "base_as_p1": 87,
+      "base_as_p0": 89,
+      "challenger_as_p1": 86,
+      "challenger_total": 175,
+      "base_total": 176,
+      "diff": -1
+    },
+    {
+      "seed": 30,
+      "challenger_as_p0": 78,
+      "base_as_p1": 74,
+      "base_as_p0": 78,
+      "challenger_as_p1": 74,
+      "challenger_total": 152,
+      "base_total": 152,
+      "diff": 0
+    },
+    {
+      "seed": 31,
+      "challenger_as_p0": 106,
+      "base_as_p1": 106,
+      "base_as_p0": 106,
+      "challenger_as_p1": 106,
+      "challenger_total": 212,
+      "base_total": 212,
+      "diff": 0
+    },
+    {
+      "seed": 32,
+      "challenger_as_p0": 97,
+      "base_as_p1": 97,
+      "base_as_p0": 97,
+      "challenger_as_p1": 97,
+      "challenger_total": 194,
+      "base_total": 194,
+      "diff": 0
+    },
+    {
+      "seed": 33,
+      "challenger_as_p0": 101,
+      "base_as_p1": 105,
+      "base_as_p0": 101,
+      "challenger_as_p1": 105,
+      "challenger_total": 206,
+      "base_total": 206,
+      "diff": 0
+    },
+    {
+      "seed": 34,
+      "challenger_as_p0": 112,
+      "base_as_p1": 111,
+      "base_as_p0": 112,
+      "challenger_as_p1": 111,
+      "challenger_total": 223,
+      "base_total": 223,
+      "diff": 0
+    },
+    {
+      "seed": 35,
+      "challenger_as_p0": 115,
+      "base_as_p1": 123,
+      "base_as_p0": 115,
+      "challenger_as_p1": 123,
+      "challenger_total": 238,
+      "base_total": 238,
+      "diff": 0
+    },
+    {
+      "seed": 36,
+      "challenger_as_p0": 152,
+      "base_as_p1": 133,
+      "base_as_p0": 152,
+      "challenger_as_p1": 133,
+      "challenger_total": 285,
+      "base_total": 285,
+      "diff": 0
+    },
+    {
+      "seed": 37,
+      "challenger_as_p0": 144,
+      "base_as_p1": 145,
+      "base_as_p0": 145,
+      "challenger_as_p1": 144,
+      "challenger_total": 288,
+      "base_total": 290,
+      "diff": -2
+    },
+    {
+      "seed": 38,
+      "challenger_as_p0": 107,
+      "base_as_p1": 100,
+      "base_as_p0": 107,
+      "challenger_as_p1": 100,
+      "challenger_total": 207,
+      "base_total": 207,
+      "diff": 0
+    },
+    {
+      "seed": 39,
+      "challenger_as_p0": 114,
+      "base_as_p1": 130,
+      "base_as_p0": 114,
+      "challenger_as_p1": 130,
+      "challenger_total": 244,
+      "base_total": 244,
+      "diff": 0
+    },
+    {
+      "seed": 40,
+      "challenger_as_p0": 154,
+      "base_as_p1": 154,
+      "base_as_p0": 154,
+      "challenger_as_p1": 154,
+      "challenger_total": 308,
+      "base_total": 308,
+      "diff": 0
+    },
+    {
+      "seed": 41,
+      "challenger_as_p0": 144,
+      "base_as_p1": 143,
+      "base_as_p0": 144,
+      "challenger_as_p1": 143,
+      "challenger_total": 287,
+      "base_total": 287,
+      "diff": 0
+    },
+    {
+      "seed": 42,
+      "challenger_as_p0": 96,
+      "base_as_p1": 96,
+      "base_as_p0": 96,
+      "challenger_as_p1": 96,
+      "challenger_total": 192,
+      "base_total": 192,
+      "diff": 0
+    },
+    {
+      "seed": 43,
+      "challenger_as_p0": 148,
+      "base_as_p1": 222,
+      "base_as_p0": 148,
+      "challenger_as_p1": 222,
+      "challenger_total": 370,
+      "base_total": 370,
+      "diff": 0
+    },
+    {
+      "seed": 44,
+      "challenger_as_p0": 86,
+      "base_as_p1": 86,
+      "base_as_p0": 86,
+      "challenger_as_p1": 86,
+      "challenger_total": 172,
+      "base_total": 172,
+      "diff": 0
+    },
+    {
+      "seed": 45,
+      "challenger_as_p0": 123,
+      "base_as_p1": 122,
+      "base_as_p0": 123,
+      "challenger_as_p1": 119,
+      "challenger_total": 242,
+      "base_total": 245,
+      "diff": -3
+    },
+    {
+      "seed": 46,
+      "challenger_as_p0": 160,
+      "base_as_p1": 159,
+      "base_as_p0": 160,
+      "challenger_as_p1": 159,
+      "challenger_total": 319,
+      "base_total": 319,
+      "diff": 0
+    },
+    {
+      "seed": 47,
+      "challenger_as_p0": 111,
+      "base_as_p1": 105,
+      "base_as_p0": 111,
+      "challenger_as_p1": 105,
+      "challenger_total": 216,
+      "base_total": 216,
+      "diff": 0
+    },
+    {
+      "seed": 48,
+      "challenger_as_p0": 196,
+      "base_as_p1": 197,
+      "base_as_p0": 196,
+      "challenger_as_p1": 197,
+      "challenger_total": 393,
+      "base_total": 393,
+      "diff": 0
+    },
+    {
+      "seed": 49,
+      "challenger_as_p0": 129,
+      "base_as_p1": 121,
+      "base_as_p0": 129,
+      "challenger_as_p1": 121,
+      "challenger_total": 250,
+      "base_total": 250,
+      "diff": 0
+    },
+    {
+      "seed": 50,
+      "challenger_as_p0": 139,
+      "base_as_p1": 109,
+      "base_as_p0": 139,
+      "challenger_as_p1": 109,
+      "challenger_total": 248,
+      "base_total": 248,
+      "diff": 0
+    }
+  ]
+}
